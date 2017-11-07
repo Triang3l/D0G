@@ -151,22 +151,22 @@ void CCommandLine::LoadParametersFromFile( const char *&pSrc, char *&pDst, int m
 	FILE *fp = fopen( szFileName, "r" );
 	if ( fp )
 	{
-		char c;
-		c = (char)fgetc( fp );
+		int c;
+		c = fgetc( fp );
 		while ( c != EOF )
 		{
 			// Turn return characters into spaces
 			if ( c == '\n' )
 				c = ' ';
 
-			*pDst++ = c;
+			*pDst++ = (char)c;
 			
 			// Don't go past the end, and allow for our terminating space character AND a terminating null character.
 			if ( (pDst - pDestStart) >= (maxDestLen-2) )
 				break;
 
 			// Get the next character, if there are more
-			c = (char)fgetc( fp );
+			c = fgetc( fp );
 		}
 	
 		// Add a terminating space character

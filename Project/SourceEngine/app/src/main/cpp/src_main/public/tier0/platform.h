@@ -376,7 +376,11 @@ typedef void * HINSTANCE;
 	// GCC 3.4.1 has a bug in supporting forced inline of templated functions
 	// this macro lets us not force inlining in that case
 	#define  FORCEINLINE_TEMPLATE inline
-	#define  __stdcall			__attribute__ ((__stdcall__))
+	#ifdef __i386__
+		#define  __stdcall			__attribute__ ((__stdcall__))
+	#else
+		#define  __stdcall
+	#endif
 #endif
 
 // Force a function call site -not- to inlined. (useful for profiling)
@@ -844,6 +848,7 @@ struct CPUInformation
 		 m_bSSE2  : 1,	// Is SSE2 Supported?
 		 m_b3DNow : 1,	// Is 3DNow! Supported?
 		 m_bMMX   : 1,	// Is MMX supported?
+		 m_bNEON  : 1,	// Is NEON supported?
 		 m_bHT	  : 1;	// Is HyperThreading supported?
 
 	uint8 m_nLogicalProcessors;		// Number op logical processors.

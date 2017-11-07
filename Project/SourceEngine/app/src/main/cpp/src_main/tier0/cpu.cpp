@@ -5,7 +5,9 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#ifdef _LINUX
+#if defined(__ANDROID__)
+#include "cpu_android.cpp"
+#elif defined(_LINUX)
 #include "cpu_linux.cpp"
 #endif
 
@@ -18,10 +20,16 @@
 #include <stdio.h>
 #endif
 
+#if defined(_LINUX) && defined(__i386__)
+#include <cpuid.h>
+#endif
+
 static bool cpuid(unsigned long function, unsigned long& out_eax, unsigned long& out_ebx, unsigned long& out_ecx, unsigned long& out_edx)
 {
-#ifdef _LINUX
+#if !defined( __i386__ )
 	return false;
+#elif defined( _LINUX )
+	return __get_cpuid((unsigned int)function, (unsigned int *)&out_eax, (unsigned int *)&out_ebx, (unsigned int *)&out_ecx, (unsigned int *)&out_edx) != 0;
 #elif defined( _X360 )
 	return false;
 #else
@@ -61,8 +69,8 @@ static bool cpuid(unsigned long function, unsigned long& out_eax, unsigned long&
 
 bool CheckMMXTechnology(void)
 {
-#ifdef _LINUX
-	return true;
+#ifndef __i386__
+	return false;
 #else
     unsigned long eax,ebx,edx,unused;
     if ( !cpuid(1,eax,ebx,unused,edx) )
@@ -123,8 +131,8 @@ static bool IsWin98OrOlder()
 
 bool CheckSSETechnology(void)
 {
-#ifdef _LINUX
-	return true;
+#ifndef __i386__
+	return false;
 #else
 if ( IsWin98OrOlder() )
 	{
@@ -143,8 +151,8 @@ if ( IsWin98OrOlder() )
 
 bool CheckSSE2Technology(void)
 {
-#ifdef _LINUX
-    return false;
+#ifndef __i386__
+	return false;
 #else
 	unsigned long eax,ebx,edx,unused;
     if ( !cpuid(1,eax,ebx,unused,edx) )
@@ -156,8 +164,8 @@ bool CheckSSE2Technology(void)
 
 bool Check3DNowTechnology(void)
 {
-#ifdef _LINUX
-    return false;
+#ifndef __i386__
+	return false;
 #else
 	unsigned long eax, unused;
     if ( !cpuid(0x80000000,eax,unused,unused,unused) )
@@ -174,10 +182,24 @@ bool Check3DNowTechnology(void)
 #endif
 }
 
+bool CheckNEONTechnology(void)
+{
+#ifndef __arm__
+	return false;
+#else
+#ifdef __ANDROID__
+	bool CheckNEONTechnologyFromPROC();
+	return CheckNEONTechnologyFromPROC();
+#else
+	return false;
+#endif
+#endif
+}
+
 bool CheckCMOVTechnology()
 {
-#ifdef _LINUX
-    return false;
+#ifndef __i386__
+	return false;
 #else
 	unsigned long eax,ebx,edx,unused;
     if ( !cpuid(1,eax,ebx,unused,edx) )
@@ -189,8 +211,8 @@ bool CheckCMOVTechnology()
 
 bool CheckFCMOVTechnology(void)
 {
-#ifdef _LINUX
-    return false;
+#ifndef __i386__
+	return false;
 #else
     unsigned long eax,ebx,edx,unused;
     if ( !cpuid(1,eax,ebx,unused,edx) )
@@ -202,8 +224,8 @@ bool CheckFCMOVTechnology(void)
 
 bool CheckRDTSCTechnology(void)
 {
-#ifdef _LINUX
-    return true;
+#ifndef __i386__
+	return false;
 #else
 	unsigned long eax,ebx,edx,unused;
     if ( !cpuid(1,eax,ebx,unused,edx) )
@@ -216,8 +238,8 @@ bool CheckRDTSCTechnology(void)
 // Return the Processor's vendor identification string, or "Generic_x86" if it doesn't exist on this CPU
 const tchar* GetProcessorVendorId()
 {
-#ifdef _LINUX
-	return "Generic_x86";
+#ifdef __arm__
+	return "Generic_ARM";
 #else
 	unsigned long unused, VendorIDRegisters[3];
 
@@ -250,10 +272,12 @@ const tchar* GetProcessorVendorId()
 // Hyper-Threading Technology is necessarily enabled.
 static bool HTSupported(void)
 {
-#if ( defined( _X360 ) || defined(_LINUX) )
+#if defined( _X360 )
 	// not entirtely sure about the semantic of HT support, it being an intel name
 	// are we asking about HW threads or HT?
 	return true;
+#elif defined( __arm__ )
+	return false;
 #else
 	const unsigned int HT_BIT		 = 0x10000000;  // EDX[28] - Bit 28 set indicates Hyper-Threading Technology is supported in hardware.
 	const unsigned int FAMILY_ID     = 0x0f00;      // EAX[11:8] - Bit 11 thru 8 contains family processor id
@@ -284,6 +308,8 @@ static uint8 LogicalProcessorsPerPackage(void)
 {
 #if defined( _X360 )
 	return 2;
+#elif defined( __arm__ )
+	return 1;
 #else
 	// EBX[23:16] indicate number of logical processors per package
 	const unsigned NUM_LOGICAL_BITS = 0x00FF0000;
@@ -327,6 +353,14 @@ static int64 CalculateClockSpeed()
 #else
 	return 3200000000LL;
 #endif
+#elif defined(__ANDROID__)
+	uint64 GetCPUFreqFromDevices(); // from cpu_android.cpp
+	int64 freq = (int64)GetCPUFreqFromDevices();
+	if ( freq == 0 )
+	{
+		freq = 1000000000LL;
+	}
+	return freq;
 #elif defined(_LINUX)
 	uint64 CalculateCPUFreq(); // from cpu_linux.cpp
 	int64 freq =(int64)CalculateCPUFreq();
@@ -377,6 +411,13 @@ const CPUInformation* GetCPUInformation()
 #elif defined( _X360 )
 	pi.m_nPhysicalProcessors = 3;
 	pi.m_nLogicalProcessors  = 6;
+#elif defined(__ANDROID__)
+	unsigned int GetCPUCountFromPROC();
+	unsigned int countFromPROC = GetCPUCountFromPROC();
+	pi.m_nPhysicalProcessors = (unsigned char)(countFromPROC / pi.m_nLogicalProcessors);
+	if (pi.m_nPhysicalProcessors == 0)
+		pi.m_nPhysicalProcessors = 1;
+	pi.m_nLogicalProcessors = (unsigned char)countFromPROC;
 #elif defined(_LINUX)
 	// TODO: poll /dev/cpuinfo when we have some benefits from multithreading
 	pi.m_nPhysicalProcessors = 1;
@@ -391,6 +432,7 @@ const CPUInformation* GetCPUInformation()
 	pi.m_bSSE          = CheckSSETechnology();
 	pi.m_bSSE2         = CheckSSE2Technology();
 	pi.m_b3DNow        = Check3DNowTechnology();
+	pi.m_bNEON         = CheckNEONTechnology();
 	pi.m_szProcessorID = (tchar*)GetProcessorVendorId();
 	pi.m_bHT		   = HTSupported();
 

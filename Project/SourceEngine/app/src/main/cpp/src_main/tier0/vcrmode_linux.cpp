@@ -22,7 +22,7 @@
 #include "extendedtrace.h"
 
 // FIXME: We totally have a bad tier dependency here
-#include "inputsystem/inputenums.h"
+#include "inputsystem/InputEnums.h"
 
 #ifndef NO_VCR
 
