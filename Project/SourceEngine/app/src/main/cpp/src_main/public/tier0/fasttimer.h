@@ -14,6 +14,10 @@
 #include <assert.h>
 #include "tier0/platform.h"
 
+#ifdef __ANDROID__
+#include <time.h>
+#endif
+
 PLATFORM_INTERFACE int64 g_ClockSpeed;
 PLATFORM_INTERFACE unsigned long g_dwClockSpeed;
 #if defined( _X360 ) && defined( _CERT )
@@ -82,9 +86,14 @@ public:
 		PMCStart();
 		PMCInitIntervalTimer( 0 );
 #endif
+#ifdef __ANDROID__
+		// CPU frequency is varying, using CLOCK_MONOTONIC with nanosecond resolution instead.
+		g_ClockSpeed = 1000000000LL;
+#else
 		const CPUInformation& pi = *GetCPUInformation();
 
 		g_ClockSpeed = pi.m_Speed;
+#endif
 		g_dwClockSpeed = (unsigned long)g_ClockSpeed;
 
 		g_ClockSpeedMicrosecondsMultiplier = 1000000.0 / (double)g_ClockSpeed;
@@ -320,6 +329,10 @@ inline void CCycleCount::Sample()
 		mov		[ecx], eax
 		mov		[ecx+4], edx
 	}
+#elif defined( __ANDROID__ )
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	m_Int64 = now.tv_sec * 1000000000LL + now.tv_nsec;
 #elif defined( _LINUX )
 	unsigned long* pSample = (unsigned long *)&m_Int64;
     __asm__ __volatile__ (  
