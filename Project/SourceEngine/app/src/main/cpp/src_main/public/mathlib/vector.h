@@ -19,10 +19,12 @@
 // For vec_t, put this somewhere else?
 #include "tier0/basetypes.h"
 
+#include "tier0/platform.h"
+
 // For rand(). We really need a library!
 #include <stdlib.h>
 
-#ifndef _X360
+#ifdef __i386__
 // For MMX intrinsics
 #include <xmmintrin.h>
 #endif
