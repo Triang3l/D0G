@@ -7,6 +7,7 @@
 #include "mathlib/ssemath.h"
 #include "mathlib/ssequaternion.h"
 
+#if !USE_NEON_FOR_SIMD
 const fltx4 Four_PointFives={0.5,0.5,0.5,0.5};
 #ifndef _X360
 const fltx4 Four_Zeros={0.0,0.0,0.0,0.0};
@@ -15,7 +16,6 @@ const fltx4 Four_Ones={1.0,1.0,1.0,1.0};
 const fltx4 Four_Twos={2.0,2.0,2.0,2.0};
 const fltx4 Four_Threes={3.0,3.0,3.0,3.0};
 const fltx4 Four_Fours={4.0,4.0,4.0,4.0};
-const fltx4 Four_Origin={0,0,0,1};
 
 const fltx4 Four_2ToThe21s={ (float) (1<<21), (float) (1<<21), (float) (1<<21), (float)(1<<21) };
 const fltx4 Four_2ToThe22s={ (float) (1<<22), (float) (1<<22), (float) (1<<22), (float)(1<<22) };
@@ -27,6 +27,9 @@ const fltx4 Four_Epsilons={FLT_EPSILON,FLT_EPSILON,FLT_EPSILON,FLT_EPSILON};
 
 const fltx4 Four_FLT_MAX={FLT_MAX,FLT_MAX,FLT_MAX,FLT_MAX};
 const fltx4 Four_Negative_FLT_MAX={-FLT_MAX,-FLT_MAX,-FLT_MAX,-FLT_MAX};
+#endif
+
+const fltx4 Four_Origin={0,0,0,1};
 
 const fltx4 g_QuatMultRowSign[4] =
 {
@@ -36,8 +39,7 @@ const fltx4 g_QuatMultRowSign[4] =
 	{ -1.0f, -1.0f, -1.0f, 1.0f }
 };
 
-#if defined( __ARM_NEON__ ) && !USE_STDC_FOR_SIMD
-const u32x4 g_SIMD_NEON_signmask[4] = { 0x80000000, 0x80000000, 0x80000000, 0x80000000 };
+#if USE_NEON_FOR_SIMD
 const i32x4 g_SIMD_NEON_signshift[4] = { -31, -30, -29, -28 };
 #endif
 

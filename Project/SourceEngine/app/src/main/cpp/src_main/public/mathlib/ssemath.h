@@ -31,6 +31,12 @@
 #define USE_STDC_FOR_SIMD 0
 #endif
 
+#if defined(__arm__) && defined(__ARM_NEON__) && !USE_STDC_FOR_SIMD
+#define USE_NEON_FOR_SIMD 1
+#else
+#define USE_NEON_FOR_SIMD 0
+#endif
+
 
 // I thought about defining a class/union for the SIMD packed floats instead of using fltx4,
 // but decided against it because (a) the nature of SIMD code which includes comparisons is to blur
@@ -62,7 +68,7 @@ typedef __vector4 fltx4;
 typedef __vector4 i32x4; // a VMX register; just a way of making it explicit that we're doing integer ops.
 typedef __vector4 u32x4; // a VMX register; just a way of making it explicit that we're doing unsigned integer ops.
 
-#elif ( defined( __ARM_NEON__ ) )
+#elif ( USE_NEON_FOR_SIMD )
 
 typedef float32x4_t fltx4;
 typedef int32x4_t i32x4;
@@ -147,7 +153,25 @@ FORCEINLINE void TestVPUFlags() {}
 // but are manufactured directly in one or two 
 // instructions, saving a load and possible L2
 // miss.)
-#ifndef _X360
+#if USE_NEON_FOR_SIMD
+#define			   Four_Zeros vdupq_n_f32( 0.0f )
+#define			   Four_Ones vdupq_n_f32( 1.0f )
+#define			   Four_Twos vdupq_n_f32( 2.0f )
+#define			   Four_Threes vdupq_n_f32( 3.0f )
+#define			   Four_Fours vdupq_n_f32( 4.0f )
+#define			   Four_Point225s vdupq_n_f32( 0.225f )
+#define			   Four_PointFives vdupq_n_f32( 0.5f )
+#define			   Four_Epsilons vdupq_n_f32( FLT_EPSILON )
+#define			   Four_2ToThe21s vdupq_n_f32( (float) (1<<21) )
+#define			   Four_2ToThe22s vdupq_n_f32( (float) (1<<22) )
+#define			   Four_2ToThe23s vdupq_n_f32( (float) (1<<23) )
+#define			   Four_2ToThe24s vdupq_n_f32( (float) (1<<24) )
+extern const fltx4 Four_Origin;									// 0 0 0 1 (origin point, like vr0 on the PS2)
+#define			   Four_FLT_MAX vdupq_n_f32( FLT_MAX )
+#define			   Four_Negative_FLT_MAX vdupq_n_f32( -FLT_MAX )
+#define			   g_SIMD_NEON_signmask vdupq_n_u32( 0x80000000 )
+extern const i32x4 g_SIMD_NEON_signshift;						// -31 -30 -29 -28
+#elif !defined( _X360 )
 extern const fltx4 Four_Zeros;									// 0 0 0 0
 extern const fltx4 Four_Ones;										// 1 1 1 1
 extern const fltx4 Four_Twos;										// 2 2 2 2
@@ -161,6 +185,8 @@ extern const fltx4 Four_2ToThe22s;								// (1<<22)..
 extern const fltx4 Four_2ToThe23s;								// (1<<23)..
 extern const fltx4 Four_2ToThe24s;								// (1<<24)..
 extern const fltx4 Four_Origin;									// 0 0 0 1 (origin point, like vr0 on the PS2)
+extern const fltx4 Four_FLT_MAX;								// FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX
+extern const fltx4 Four_Negative_FLT_MAX;						// -FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX
 #else
 #define			   Four_Zeros XMVectorZero()					// 0 0 0 0
 #define			   Four_Ones XMVectorSplatOne()					// 1 1 1 1
@@ -175,13 +201,8 @@ extern const fltx4 Four_2ToThe22s;								// (1<<22)..
 extern const fltx4 Four_2ToThe23s;								// (1<<23)..
 extern const fltx4 Four_2ToThe24s;								// (1<<24)..
 extern const fltx4 Four_Origin;									// 0 0 0 1 (origin point, like vr0 on the PS2)
-#endif
 extern const fltx4 Four_FLT_MAX;								// FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX
 extern const fltx4 Four_Negative_FLT_MAX;						// -FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX
-
-#if defined( __ARM_NEON__ ) && !USE_STDC_FOR_SIMD
-extern const u32x4 g_SIMD_NEON_signmask;						// 0x80000000 x 4
-extern const i32x4 g_SIMD_NEON_signshift;						// -31 -30 -29 -28
 #endif
 
 // external aligned integer constants
@@ -268,6 +289,46 @@ FORCEINLINE fltx4 SplatWSIMD( fltx4 a )
 	SubFloat( retVal, 2 ) = SubFloat( a, 3 );
 	SubFloat( retVal, 3 ) = SubFloat( a, 3 );
 	return retVal;
+}
+
+FORCEINLINE float GetXSIMD( const fltx4& a )
+{
+	return SubFloat( a, 0 );
+}
+
+FORCEINLINE float GetYSIMD( const fltx4& a )
+{
+	return SubFloat( a, 1 );
+}
+
+FORCEINLINE float GetZSIMD( const fltx4& a )
+{
+	return SubFloat( a, 2 );
+}
+
+FORCEINLINE float GetWSIMD( const fltx4& a )
+{
+	return SubFloat( a, 3 );
+}
+
+FORCEINLINE uint32 GetIntXSIMD( const fltx4 & a )
+{
+	return SubInt( a, 0 );
+}
+
+FORCEINLINE uint32 GetIntYSIMD( const fltx4 & a )
+{
+	return SubInt( a, 1 );
+}
+
+FORCEINLINE uint32 GetIntZSIMD( const fltx4 & a )
+{
+	return SubInt( a, 2 );
+}
+
+FORCEINLINE uint32 GetIntWSIMD( const fltx4 & a )
+{
+	return SubInt( a, 3 );
 }
 
 FORCEINLINE fltx4 SetXSIMD( const fltx4& a, const fltx4& x )
@@ -1625,7 +1686,47 @@ FORCEINLINE uint32 & SubInt( fltx4 & a, int idx )
 	return a_union.m128_u32[idx];
 }
 
-#elif ( defined( __ARM_NEON__ ) )
+FORCEINLINE float GetXSIMD( const fltx4& a )
+{
+	return SubFloat( a, 0 );
+}
+
+FORCEINLINE float GetYSIMD( const fltx4& a )
+{
+	return SubFloat( a, 1 );
+}
+
+FORCEINLINE float GetZSIMD( const fltx4& a )
+{
+	return SubFloat( a, 2 );
+}
+
+FORCEINLINE float GetWSIMD( const fltx4& a )
+{
+	return SubFloat( a, 3 );
+}
+
+FORCEINLINE uint32 GetIntXSIMD( const fltx4 & a )
+{
+	return SubInt( a, 0 );
+}
+
+FORCEINLINE uint32 GetIntYSIMD( const fltx4 & a )
+{
+	return SubInt( a, 1 );
+}
+
+FORCEINLINE uint32 GetIntZSIMD( const fltx4 & a )
+{
+	return SubInt( a, 2 );
+}
+
+FORCEINLINE uint32 GetIntWSIMD( const fltx4 & a )
+{
+	return SubInt( a, 3 );
+}
+
+#elif ( USE_NEON_FOR_SIMD )
 
 //---------------------------------------------------------------------
 // ARM/NEON implementation
@@ -1716,9 +1817,59 @@ FORCEINLINE float & SubFloat( fltx4 & a, int idx )
 	return (reinterpret_cast<float *>(&a))[idx];
 }
 
+FORCEINLINE uint32 SubInt( const fltx4 & a, int idx )
+{
+	return (reinterpret_cast<uint32 const *>(&a))[idx];
+}
+
+FORCEINLINE uint32 & SubInt( fltx4 & a, int idx )
+{
+	return (reinterpret_cast<uint32 *>(&a))[idx];
+}
+
 FORCEINLINE uint32 SubFloatConvertToInt( const fltx4 & a, int idx )
 {
 	return (uint32)SubFloat(a,idx);
+}
+
+FORCEINLINE float GetXSIMD( const fltx4& a )
+{
+	return vgetq_lane_f32( a, 0 );
+}
+
+FORCEINLINE float GetYSIMD( const fltx4& a )
+{
+	return vgetq_lane_f32( a, 1 );
+}
+
+FORCEINLINE float GetZSIMD( const fltx4& a )
+{
+	return vgetq_lane_f32( a, 2 );
+}
+
+FORCEINLINE float GetWSIMD( const fltx4& a )
+{
+	return vgetq_lane_f32( a, 3 );
+}
+
+FORCEINLINE uint32 GetIntXSIMD( const fltx4 & a )
+{
+	return vgetq_lane_u32( vreinterpretq_u32_f32( a ), 0 );
+}
+
+FORCEINLINE uint32 GetIntYSIMD( const fltx4 & a )
+{
+	return vgetq_lane_u32( vreinterpretq_u32_f32( a ), 1 );
+}
+
+FORCEINLINE uint32 GetIntZSIMD( const fltx4 & a )
+{
+	return vgetq_lane_u32( vreinterpretq_u32_f32( a ), 2 );
+}
+
+FORCEINLINE uint32 GetIntWSIMD( const fltx4 & a )
+{
+	return vgetq_lane_u32( vreinterpretq_u32_f32( a ), 3 );
 }
 
 FORCEINLINE fltx4 LoadZeroSIMD( void )
@@ -1852,47 +2003,51 @@ FORCEINLINE fltx4 Dot4SIMD( const fltx4 &a, const fltx4 &b )
 //TODO: implement as four-way Taylor series (see xbox implementation)
 FORCEINLINE fltx4 SinSIMD( const fltx4 &radians )
 {
-	fltx4 result;
-	result = vsetq_lane_f32( sinf( vgetq_lane_f32( radians, 0 ) ), result, 0 );
-	result = vsetq_lane_f32( sinf( vgetq_lane_f32( radians, 1 ) ), result, 1 );
-	result = vsetq_lane_f32( sinf( vgetq_lane_f32( radians, 2 ) ), result, 2 );
-	result = vsetq_lane_f32( sinf( vgetq_lane_f32( radians, 3 ) ), result, 3 );
-	return result;
+	float flRadians[4], flResult[4];
+	StoreUnalignedSIMD( flRadians, radians );
+	flResult[0] = sinf( flRadians[0] );
+	flResult[1] = sinf( flRadians[1] );
+	flResult[2] = sinf( flRadians[2] );
+	flResult[3] = sinf( flRadians[3] );
+	return LoadUnalignedSIMD( flResult );
 }
 
 FORCEINLINE void SinCos3SIMD( fltx4 &sine, fltx4 &cosine, const fltx4 &radians )
 {
 	// FIXME: Make a fast NEON version
-	float sines[4], cosines[4];
-	SinCos( vgetq_lane_f32( radians, 0 ), &sines[0], &cosines[0] );
-	SinCos( vgetq_lane_f32( radians, 1 ), &sines[1], &cosines[1] );
-	SinCos( vgetq_lane_f32( radians, 2 ), &sines[2], &cosines[2] );
-	sine = LoadUnalignedSIMD( sines );
-	cosine = LoadUnalignedSIMD( cosines );
+	float flRadians[4], flSine[4], flCosine[4];
+	StoreUnalignedSIMD( flRadians, radians );
+	SinCos( flRadians[0], &flSine[0], &flCosine[0] );
+	SinCos( flRadians[1], &flSine[1], &flCosine[1] );
+	SinCos( flRadians[2], &flSine[2], &flCosine[2] );
+	sine = LoadUnalignedSIMD( flSine );
+	cosine = LoadUnalignedSIMD( flCosine );
 }
 
 FORCEINLINE void SinCosSIMD( fltx4 &sine, fltx4 &cosine, const fltx4 &radians )
 {
 	// FIXME: Make a fast NEON version
-	float sines[4], cosines[4];
-	SinCos( vgetq_lane_f32( radians, 0 ), &sines[0], &cosines[0] );
-	SinCos( vgetq_lane_f32( radians, 1 ), &sines[1], &cosines[1] );
-	SinCos( vgetq_lane_f32( radians, 2 ), &sines[2], &cosines[2] );
-	SinCos( vgetq_lane_f32( radians, 3 ), &sines[3], &cosines[3] );
-	sine = LoadUnalignedSIMD( sines );
-	cosine = LoadUnalignedSIMD( cosines );
+	float flRadians[4], flSine[4], flCosine[4];
+	StoreUnalignedSIMD( flRadians, radians );
+	SinCos( flRadians[0], &flSine[0], &flCosine[0] );
+	SinCos( flRadians[1], &flSine[1], &flCosine[1] );
+	SinCos( flRadians[2], &flSine[2], &flCosine[2] );
+	SinCos( flRadians[3], &flSine[3], &flCosine[3] );
+	sine = LoadUnalignedSIMD( flSine );
+	cosine = LoadUnalignedSIMD( flCosine );
 }
 
 //TODO: implement as four-way Taylor series (see xbox implementation)
 FORCEINLINE fltx4 ArcSinSIMD( const fltx4 &sine )
 {
 	// FIXME: Make a fast NEON version
-	fltx4 result;
-	result = vsetq_lane_f32( asinf( vgetq_lane_f32( sine, 0 ) ), result, 0 );
-	result = vsetq_lane_f32( asinf( vgetq_lane_f32( sine, 1 ) ), result, 1 );
-	result = vsetq_lane_f32( asinf( vgetq_lane_f32( sine, 2 ) ), result, 2 );
-	result = vsetq_lane_f32( asinf( vgetq_lane_f32( sine, 3 ) ), result, 3 );
-	return result;
+	float flSine[4], flResult[4];
+	StoreUnalignedSIMD( flSine, sine );
+	flResult[0] = asinf( flSine[0] );
+	flResult[1] = asinf( flSine[1] );
+	flResult[2] = asinf( flSine[2] );
+	flResult[3] = asinf( flSine[3] );
+	return LoadUnalignedSIMD( flResult );
 }
 
 FORCEINLINE fltx4 NegSIMD(const fltx4 &a) // negate: -a
@@ -2065,12 +2220,13 @@ FORCEINLINE fltx4 ReciprocalSaturateSIMD( const fltx4 & a )
 FORCEINLINE fltx4 ExpSIMD( const fltx4 &toPower )
 {
 	// FIXME: Make a fast NEON version
-	fltx4 result;
-	result = vsetq_lane_f32( exp2f( vgetq_lane_f32( toPower, 0 ) ), result, 0 );
-	result = vsetq_lane_f32( exp2f( vgetq_lane_f32( toPower, 1 ) ), result, 1 );
-	result = vsetq_lane_f32( exp2f( vgetq_lane_f32( toPower, 2 ) ), result, 2 );
-	result = vsetq_lane_f32( exp2f( vgetq_lane_f32( toPower, 3 ) ), result, 3 );
-	return result;
+	float flToPower[4], flResult[4];
+	StoreUnalignedSIMD( flToPower, toPower );
+	flResult[0] = exp2f( flToPower[0] );
+	flResult[1] = exp2f( flToPower[1] );
+	flResult[2] = exp2f( flToPower[2] );
+	flResult[3] = exp2f( flToPower[3] );
+	return LoadUnalignedSIMD( flResult );
 }
 
 // Clamps the components of a vector to a specified minimum and maximum range.
