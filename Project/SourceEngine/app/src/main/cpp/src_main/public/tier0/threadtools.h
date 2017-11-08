@@ -115,9 +115,11 @@ extern "C" unsigned long __declspec(dllimport) __stdcall GetCurrentThreadId();
 
 inline void ThreadPause()
 {
-#if defined( _WIN32 ) && !defined( _X360 )
+#if defined( __arm__ )
+	__asm__ __volatile__("yield");
+#elif defined( _WIN32 ) && !defined( _X360 )
 	__asm pause;
-#elif _LINUX
+#elif defined( _LINUX )
 	__asm __volatile("pause");
 #elif defined( _X360 )
 #else
