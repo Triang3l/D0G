@@ -179,6 +179,11 @@ extern const fltx4 Four_Origin;									// 0 0 0 1 (origin point, like vr0 on th
 extern const fltx4 Four_FLT_MAX;								// FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX
 extern const fltx4 Four_Negative_FLT_MAX;						// -FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX
 
+#if defined( __ARM_NEON__ ) && !USE_STDC_FOR_SIMD
+extern const u32x4 g_SIMD_NEON_signmask;						// 0x80000000 x 4
+extern const i32x4 g_SIMD_NEON_signshift;						// -31 -30 -29 -28
+#endif
+
 // external aligned integer constants
 extern const ALIGN16 int32 g_SIMD_clear_signmask[];			// 0x7fffffff x 4
 extern const ALIGN16 int32 g_SIMD_signmask[];				// 0x80000000 x 4
@@ -1638,22 +1643,22 @@ FORCEINLINE fltx4 LoadAlignedSIMD( const float *pSIMD )
 
 FORCEINLINE fltx4 AndSIMD( const fltx4 & a, const fltx4 & b )				// a & b
 {
-	return (fltx4)vandq_u32( (u32x4)a, (u32x4)b );
+	return vreinterpretq_f32_u32( vandq_u32( vreinterpretq_u32_f32( a ), vreinterpretq_u32_f32( b ) ) );
 }
 
 FORCEINLINE fltx4 AndNotSIMD( const fltx4 & a, const fltx4 & b )				// a & b
 {
-	return (fltx4)vbicq_u32( (u32x4)a, (u32x4)b );
+	return vreinterpretq_f32_u32( vbicq_u32( vreinterpretq_u32_f32( a ), vreinterpretq_u32_f32( b ) ) );
 }
 
 FORCEINLINE fltx4 XorSIMD( const fltx4 & a, const fltx4 & b )				// a & b
 {
-	return (fltx4)veorq_u32( (u32x4)a, (u32x4)b );
+	return vreinterpretq_f32_u32( veorq_u32( vreinterpretq_u32_f32( a ), vreinterpretq_u32_f32( b ) ) );
 }
 
 FORCEINLINE fltx4 OrSIMD( const fltx4 & a, const fltx4 & b )				// a & b
 {
-	return (fltx4)vorrq_u32( (u32x4)a, (u32x4)b );
+	return vreinterpretq_f32_u32( vorrq_u32( vreinterpretq_u32_f32( a ), vreinterpretq_u32_f32( b ) ) );
 }
 
 // Squelch the w component of a vector to +0.0.
@@ -1717,9 +1722,7 @@ FORCEINLINE fltx4 LoadOneSIMD( void )
 
 FORCEINLINE fltx4 MaskedAssign( const fltx4 & ReplacementMask, const fltx4 & NewValue, const fltx4 & OldValue )
 {
-	return OrSIMD(
-		AndSIMD( ReplacementMask, NewValue ),
-		AndNotSIMD( ReplacementMask, OldValue ) );
+	return vbslq_f32( vreinterpretq_u32_f32( ReplacementMask ), NewValue, OldValue );
 }
 
 FORCEINLINE fltx4 SplatXSIMD( fltx4 const & a )
@@ -1886,6 +1889,31 @@ FORCEINLINE fltx4 NegSIMD(const fltx4 &a) // negate: -a
 	return vnegq_f32( a );
 }
 
+FORCEINLINE int TestSignSIMD( const fltx4 & a )								// mask of which floats have the high bit set
+{
+	u32x4 retVal = vshlq_u32( vandq_u32( vreinterpretq_u32_f32( a ), g_SIMD_NEON_signmask ), g_SIMD_NEON_signshift ); // 1 || 2 || 4 || 8
+	retVal = vorrq_u32( mask, vextq_u32( mask, mask, 1 ) ); // 1+2 || 2+4 || 4+8 || 8+1
+	retVal = vorrq_u32( mask, vextq_u32( mask, mask, 2 ) ); // 1+2+4+8 || 2+4+8+1 || 4+8+1+2 || 8+1+2+4
+	return (int)vgetq_lane_u32( retVal, 0 );
+}
+
+FORCEINLINE bool IsAnyNegative( const fltx4 & a )							// (a.x < 0) || (a.y < 0) || (a.z < 0) || (a.w < 0)
+{
+	u32x4 retVal = vshrq_n_u32( vreinterpretq_u32_f32( a ), 31 );
+	retVal = vorrq_u32( mask, vextq_u32( mask, mask, 1 ) );
+	retVal = vorrq_u32( mask, vextq_u32( mask, mask, 2 ) );
+	return vgetq_lane_u32( retVal, 0 ) != 0;
+}
+
+// NEON-specific.
+FORCEINLINE bool IsAnyPositive( const fltx4 & a )							// (a.x >= 0) || (a.y >= 0) || (a.z >= 0) || (a.w >= 0)
+{
+	u32x4 retVal = vshrq_n_u32( vreinterpretq_u32_f32( a ), 31 );
+	retVal = vandq_u32( mask, vextq_u32( mask, mask, 1 ) );
+	retVal = vandq_u32( mask, vextq_u32( mask, mask, 2 ) );
+	return vgetq_lane_u32( retVal, 0 ) == 0;
+}
+
 FORCEINLINE fltx4 CmpEqSIMD( const fltx4 & a, const fltx4 & b )				// (a==b) ? ~0:0
 {
 	return vceqq_f32( a, b );
@@ -1909,6 +1937,24 @@ FORCEINLINE fltx4 CmpLtSIMD( const fltx4 & a, const fltx4 & b )				// (a<b) ? ~0
 FORCEINLINE fltx4 CmpLeSIMD( const fltx4 & a, const fltx4 & b )				// (a<=b) ? ~0:0
 {
 	return vcleq_f32( a, b );
+}
+
+// for branching when a.xyzw > b.xyzw
+FORCEINLINE bool IsAllGreaterThan( const fltx4 &a, const fltx4 &b )
+{
+	return !IsAnyNegative( CmpLeSIMD( a, b ) );
+}
+
+// for branching when a.xyzw >= b.xyzw
+FORCEINLINE bool IsAllGreaterThanOrEq( const fltx4 &a, const fltx4 &b )
+{
+	return !IsAnyNegative( CmpLtSIMD( a, b ) );
+}
+
+// For branching if all a.xyzw == b.xyzw
+FORCEINLINE bool IsAllEqual( const fltx4 & a, const fltx4 & b )
+{
+	return !IsAnyPositive( CmpEqSIMD( a, b ) );
 }
 
 FORCEINLINE fltx4 CmpInBoundsSIMD( const fltx4 & a, const fltx4 & b )		// (a <= b && a >= -b) ? ~0 : 0
@@ -1941,6 +1987,11 @@ FORCEINLINE fltx4 FloorSIMD( const fltx4 &a )
 {
 	fltx4 retVal = vcvtq_f32_s32( vcvtq_s32_f32( a ) );
 	return SubSIMD( retVal, AndSIMD( Four_Ones, CmpGtSIMD( retVal, a ) ) );
+}
+
+inline bool IsAllZeros( const fltx4 & var )
+{
+	return !IsAnyNegative( vreinterpretq_f32_u32( vtstq_u32( vreinterpretq_u32_f32( var ), vreinterpretq_u32_f32( var ) ) ) );
 }
 
 FORCEINLINE fltx4 ReciprocalSqrtEstSIMD( const fltx4 & a )			// 1/sqrt(a), more or less
@@ -2058,7 +2109,7 @@ FORCEINLINE fltx4 FindHighestSIMD3( const fltx4 &a )
 // splat all components of a vector to a signed immediate int number.
 FORCEINLINE fltx4 IntSetImmediateSIMD(int to)
 {
-	return (fltx4)vdupq_n_s32( to );
+	return vreinterpretq_f32_s32( vdupq_n_s32( to ) );
 }
 
 // Load 4 aligned words into a SIMD register
@@ -2076,7 +2127,7 @@ FORCEINLINE i32x4 LoadUnalignedIntSIMD(const int32 * RESTRICT pSIMD)
 // save into four words, 16-byte aligned
 FORCEINLINE void StoreAlignedIntSIMD( int32 * RESTRICT pSIMD, const fltx4 & a )
 {
-	vst1q_s32( pSIMD, (i32x4)a );
+	vst1q_s32( pSIMD, vreinterpretq_s32_f32( a ) );
 }
 
 FORCEINLINE void StoreAlignedIntSIMD( intx4 &pSIMD, const fltx4 & a )
@@ -2086,7 +2137,7 @@ FORCEINLINE void StoreAlignedIntSIMD( intx4 &pSIMD, const fltx4 & a )
 
 FORCEINLINE void StoreUnalignedIntSIMD( int32 * RESTRICT pSIMD, const fltx4 & a )
 {
-	vst1q_s32( pSIMD, (i32x4)a );
+	vst1q_s32( pSIMD, vreinterpretq_s32_f32( a ) );
 }
 
 // Take a fltx4 containing fixed-point uints and 
