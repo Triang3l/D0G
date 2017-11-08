@@ -735,6 +735,17 @@ FORCEINLINE fltx4 ClampVectorSIMD( FLTX4 in, FLTX4 min, FLTX4 max)
 	return MaxSIMD( min, MinSIMD( max, in ) );
 }
 
+FORCEINLINE void TransposeSIMD( fltx4 & x, fltx4 & y, fltx4 & z, fltx4 & w)
+{
+	__asm__ __volatile__ (
+		"vzip.f32 %q0, %q1\n"
+		"vzip.f32 %q2, %q3\n"
+		"vswp %f0, %e2\n"
+		"vswp %f1, %e3\n"
+		"vswp %q1, %q2\n"
+		: "+w" (x), "+w" (y), "+w" (z), "+w" (w) );
+}
+
 // Squelch the w component of a vector to +0.0.
 // Most efficient when you say a = SetWToZeroSIMD(a) (avoids a copy)
 FORCEINLINE fltx4 SetWToZeroSIMD( const fltx4 & a )
