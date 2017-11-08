@@ -9,7 +9,9 @@
 #if defined( _X360 )
 #include <xboxmath.h>
 #elif defined( __arm__ )
+#ifdef __ARM_NEON__
 #include <arm_neon.h>
+#endif
 #else
 #include <xmmintrin.h>
 #endif
@@ -17,7 +19,13 @@
 #include <mathlib/vector.h>
 #include <mathlib/mathlib.h>
 
-#if defined(_LINUX)
+#if defined(__arm__)
+#ifdef __ARM_NEON__
+#define USE_STDC_FOR_SIMD 0
+#else
+#define USE_STDC_FOR_SIMD 1
+#endif
+#elif defined(_LINUX)
 #define USE_STDC_FOR_SIMD 0
 #else
 #define USE_STDC_FOR_SIMD 0
@@ -54,8 +62,8 @@ typedef __vector4 fltx4;
 typedef __vector4 i32x4; // a VMX register; just a way of making it explicit that we're doing integer ops.
 typedef __vector4 u32x4; // a VMX register; just a way of making it explicit that we're doing unsigned integer ops.
 
-#elif ( defined( __arm__ ) )
-	
+#elif ( defined( __ARM_NEON__ ) )
+
 typedef float32x4_t fltx4;
 typedef int32x4_t i32x4;
 typedef uint32x4_t u32x4;
@@ -1601,7 +1609,7 @@ FORCEINLINE uint32 & SubInt( fltx4 & a, int idx )
 	return a_union.m128_u32[idx];
 }
 
-#elif ( defined( __arm__ ) )
+#elif ( defined( __ARM_NEON__ ) )
 
 //---------------------------------------------------------------------
 // ARM/NEON implementation
@@ -1761,10 +1769,28 @@ FORCEINLINE fltx4 SetComponentSIMD( const fltx4& a, int nComponent, float flValu
 	return result;
 }
 
+// a b c d -> b c d a
+FORCEINLINE fltx4 RotateLeft( const fltx4 & a )
+{
+	return vextq_f32( a, a, 1 );
+}
+
 // a b c d -> c d a b
 FORCEINLINE fltx4 RotateLeft2( const fltx4 & a )
 {
-	return vcombine_f32( vget_high_f32( a ), vget_low_f32( a ) );
+	return vextq_f32( a, a, 2 );
+}
+
+// a b c d -> d a b c
+FORCEINLINE fltx4 RotateRight( const fltx4 & a )
+{
+	return vextq_f32( a, a, 3 );
+}
+
+// a b c d -> c d a b
+FORCEINLINE fltx4 RotateRight2( const fltx4 & a )
+{
+	return vextq_f32( a, a, 2 );
 }
 
 // a b c d -> c d a b
@@ -1813,10 +1839,10 @@ FORCEINLINE fltx4 Dot4SIMD( const fltx4 &a, const fltx4 &b )
 FORCEINLINE fltx4 SinSIMD( const fltx4 &radians )
 {
 	fltx4 result;
-	result = vsetq_lane_f32( sin( vgetq_lane_f32( radians, 0 ) ), result, 0 );
-	result = vsetq_lane_f32( sin( vgetq_lane_f32( radians, 1 ) ), result, 1 );
-	result = vsetq_lane_f32( sin( vgetq_lane_f32( radians, 2 ) ), result, 2 );
-	result = vsetq_lane_f32( sin( vgetq_lane_f32( radians, 3 ) ), result, 3 );
+	result = vsetq_lane_f32( sinf( vgetq_lane_f32( radians, 0 ) ), result, 0 );
+	result = vsetq_lane_f32( sinf( vgetq_lane_f32( radians, 1 ) ), result, 1 );
+	result = vsetq_lane_f32( sinf( vgetq_lane_f32( radians, 2 ) ), result, 2 );
+	result = vsetq_lane_f32( sinf( vgetq_lane_f32( radians, 3 ) ), result, 3 );
 	return result;
 }
 
@@ -1848,10 +1874,10 @@ FORCEINLINE fltx4 ArcSinSIMD( const fltx4 &sine )
 {
 	// FIXME: Make a fast NEON version
 	fltx4 result;
-	result = vsetq_lane_f32( asin( vgetq_lane_f32( sine, 0 ) ), result, 0 );
-	result = vsetq_lane_f32( asin( vgetq_lane_f32( sine, 1 ) ), result, 1 );
-	result = vsetq_lane_f32( asin( vgetq_lane_f32( sine, 2 ) ), result, 2 );
-	result = vsetq_lane_f32( asin( vgetq_lane_f32( sine, 3 ) ), result, 3 );
+	result = vsetq_lane_f32( asinf( vgetq_lane_f32( sine, 0 ) ), result, 0 );
+	result = vsetq_lane_f32( asinf( vgetq_lane_f32( sine, 1 ) ), result, 1 );
+	result = vsetq_lane_f32( asinf( vgetq_lane_f32( sine, 2 ) ), result, 2 );
+	result = vsetq_lane_f32( asinf( vgetq_lane_f32( sine, 3 ) ), result, 3 );
 	return result;
 }
 
@@ -1883,6 +1909,226 @@ FORCEINLINE fltx4 CmpLtSIMD( const fltx4 & a, const fltx4 & b )				// (a<b) ? ~0
 FORCEINLINE fltx4 CmpLeSIMD( const fltx4 & a, const fltx4 & b )				// (a<=b) ? ~0:0
 {
 	return vcleq_f32( a, b );
+}
+
+FORCEINLINE fltx4 CmpInBoundsSIMD( const fltx4 & a, const fltx4 & b )		// (a <= b && a >= -b) ? ~0 : 0
+{
+	return AndSIMD( CmpLeSIMD(a,b), CmpGeSIMD(a, NegSIMD(b)) );
+}
+
+FORCEINLINE fltx4 MinSIMD( const fltx4 & a, const fltx4 & b )				// min(a,b)
+{
+	return vminq_f32( a, b );
+}
+
+FORCEINLINE fltx4 MaxSIMD( const fltx4 & a, const fltx4 & b )				// max(a,b)
+{
+	return vmaxq_f32( a, b );
+}
+
+// vcvtq_s32_f32 rounds towards zero, so it's floor for positive and ceil for negative numbers.
+// For non-integers, ceil(a) == floor(a) + 1 and floor(a) == ceil(a) - 1.
+// For integers, ceil(a) == floor(a) == a.
+// If the result is bigger than the original number, it was ceiled, if smaller, it was floored.
+
+FORCEINLINE fltx4 CeilSIMD( const fltx4 &a )
+{
+	fltx4 retVal = vcvtq_f32_s32( vcvtq_s32_f32( a ) );
+	return AddSIMD( retVal, AndSIMD( Four_Ones, CmpLtSIMD( retVal, a ) ) );
+}
+
+FORCEINLINE fltx4 FloorSIMD( const fltx4 &a )
+{
+	fltx4 retVal = vcvtq_f32_s32( vcvtq_s32_f32( a ) );
+	return SubSIMD( retVal, AndSIMD( Four_Ones, CmpGtSIMD( retVal, a ) ) );
+}
+
+FORCEINLINE fltx4 ReciprocalSqrtEstSIMD( const fltx4 & a )			// 1/sqrt(a), more or less
+{
+	return vrsqrteq_f32( a );
+}
+
+/// uses newton iteration for higher precision results than ReciprocalSqrtEstSIMD
+FORCEINLINE fltx4 ReciprocalSqrtSIMD( const fltx4 & a )				// 1/sqrt(a)
+{
+	fltx4 guess = ReciprocalSqrtEstSIMD( a );
+	return MulSIMD( vrsqrtsq_f32( guess, a ), guess );
+}
+
+FORCEINLINE fltx4 SqrtEstSIMD( const fltx4 & a )					// sqrt(a), more or less
+{
+	fltx4 guess = ReciprocalSqrtEstSIMD( a );
+	guess = MulSIMD( vrsqrtsq_f32( guess, a ), guess );
+	return AndNotSIMD( MulSIMD( a, guess ), CmpEqSIMD( guess, Four_Zeros ) );
+}
+
+FORCEINLINE fltx4 SqrtSIMD( const fltx4 & a )						// sqrt(a)
+{
+	fltx4 guess = ReciprocalSqrtEstSIMD( a );
+	guess = MulSIMD( vrsqrtsq_f32( guess, a ), guess );
+	guess = MulSIMD( vrsqrtsq_f32( guess, a ), guess );
+	guess = MulSIMD( vrsqrtsq_f32( guess, a ), guess );
+	return AndNotSIMD( MulSIMD( a, guess ), CmpEqSIMD( a, Four_Zeros ) );
+}
+
+FORCEINLINE fltx4 ReciprocalEstSIMD( const fltx4 & a )				// 1/a, more or less
+{
+	return vrecpeq_f32( a );
+}
+
+/// 1/x for all 4 values. uses reciprocal approximation instruction plus newton iteration.
+/// No error checking!
+FORCEINLINE fltx4 ReciprocalSIMD( const fltx4 & a )					// 1/a
+{
+	fltx4 guess = ReciprocalEstSIMD( a );
+	return MulSIMD( vrecpsq_f32( guess, a ), guess );
+}
+
+FORCEINLINE fltx4 DivSIMD( const fltx4 & a, const fltx4 & b )				// a/b
+{
+	return MulSIMD( a, ReciprocalSIMD( b ) );
+};
+
+/// 1/x for all 4 values.
+/// 1/0 will result in a big but NOT infinite result
+FORCEINLINE fltx4 ReciprocalSaturateSIMD( const fltx4 & a )
+{
+	fltx4 zero_mask = CmpEqSIMD( a, Four_Zeros );
+	fltx4 ret = OrSIMD( a, AndSIMD( Four_Epsilons, zero_mask ) );
+	ret = ReciprocalSIMD( ret );
+	return ret;
+}
+
+// 2^x for all values (the antilog)
+FORCEINLINE fltx4 ExpSIMD( const fltx4 &toPower )
+{
+	// FIXME: Make a fast NEON version
+	fltx4 result;
+	result = vsetq_lane_f32( exp2f( vgetq_lane_f32( toPower, 0 ) ), result, 0 );
+	result = vsetq_lane_f32( exp2f( vgetq_lane_f32( toPower, 1 ) ), result, 1 );
+	result = vsetq_lane_f32( exp2f( vgetq_lane_f32( toPower, 2 ) ), result, 2 );
+	result = vsetq_lane_f32( exp2f( vgetq_lane_f32( toPower, 3 ) ), result, 3 );
+	return result;
+}
+
+// Clamps the components of a vector to a specified minimum and maximum range.
+FORCEINLINE fltx4 ClampVectorSIMD( FLTX4 in, FLTX4 min, FLTX4 max)
+{
+	return MaxSIMD( min, MinSIMD( max, in ) );
+}
+
+FORCEINLINE fltx4 FindLowestSIMD3( const fltx4 &a )
+{
+	// a is [x,y,z,G] (where G is garbage)
+	// rotate left by one 
+	fltx4 compareOne = RotateLeft( a );
+	// compareOne is [y,z,G,x]
+	fltx4 retval = MinSIMD( a, compareOne );
+	// retVal is [min(x,y), ... ]
+	compareOne = RotateLeft2( a );
+	// compareOne is [z, G, x, y]
+	retval = MinSIMD( retval, compareOne );
+	// retVal = [ min(min(x,y),z)..]
+	// splat the x component out to the whole vector and return
+	return SplatXSIMD( retval );
+	
+}
+
+FORCEINLINE fltx4 FindHighestSIMD3( const fltx4 &a )
+{
+	// a is [x,y,z,G] (where G is garbage)
+	// rotate left by one 
+	fltx4 compareOne = RotateLeft( a );
+	// compareOne is [y,z,G,x]
+	fltx4 retval = MaxSIMD( a, compareOne );
+	// retVal is [max(x,y), ... ]
+	compareOne = RotateLeft2( a );
+	// compareOne is [z, G, x, y]
+	retval = MaxSIMD( retval, compareOne );
+	// retVal = [ max(max(x,y),z)..]
+	// splat the x component out to the whole vector and return
+	return SplatXSIMD( retval );
+	
+}
+
+// ------------------------------------
+// INTEGER SIMD OPERATIONS.
+// ------------------------------------
+
+// splat all components of a vector to a signed immediate int number.
+FORCEINLINE fltx4 IntSetImmediateSIMD(int to)
+{
+	return (fltx4)vdupq_n_s32( to );
+}
+
+// Load 4 aligned words into a SIMD register
+FORCEINLINE i32x4 LoadAlignedIntSIMD(const int32 * RESTRICT pSIMD)
+{
+	return vld1q_s32( pSIMD );
+}
+
+// Load 4 unaligned words into a SIMD register
+FORCEINLINE i32x4 LoadUnalignedIntSIMD(const int32 * RESTRICT pSIMD)
+{
+	return vld1q_s32( pSIMD );
+}
+
+// save into four words, 16-byte aligned
+FORCEINLINE void StoreAlignedIntSIMD( int32 * RESTRICT pSIMD, const fltx4 & a )
+{
+	vst1q_s32( pSIMD, (i32x4)a );
+}
+
+FORCEINLINE void StoreAlignedIntSIMD( intx4 &pSIMD, const fltx4 & a )
+{
+	StoreAlignedIntSIMD( pSIMD.Base(), a );
+}
+
+FORCEINLINE void StoreUnalignedIntSIMD( int32 * RESTRICT pSIMD, const fltx4 & a )
+{
+	vst1q_s32( pSIMD, (i32x4)a );
+}
+
+// Take a fltx4 containing fixed-point uints and 
+// return them as single precision floats. No
+// fixed point conversion is done.
+FORCEINLINE fltx4 UnsignedIntConvertToFltSIMD( const u32x4 &vSrcA )
+{
+	return vcvtq_f32_u32( vSrcA );
+}
+
+// Take a fltx4 containing fixed-point sints and 
+// return them as single precision floats. No 
+// fixed point conversion is done.
+FORCEINLINE fltx4 SignedIntConvertToFltSIMD( const i32x4 &vSrcA )
+{
+	return vcvtq_f32_s32( vSrcA );
+}
+
+/*
+works on fltx4's as if they are four uints.
+the first parameter contains the words to be shifted,
+the second contains the amount to shift by AS INTS
+
+for i = 0 to 3
+shift = vSrcB_i*32:(i*32)+4
+vReturned_i*32:(i*32)+31 = vSrcA_i*32:(i*32)+31 << shift
+*/
+FORCEINLINE i32x4 IntShiftLeftWordSIMD(const i32x4 &vSrcA, const i32x4 &vSrcB)
+{
+	return vshlq_s32( vSrcA, vSrcB );
+}
+
+// Fixed-point conversion and save as SIGNED INTS.
+// pDest->x = Int (vSrc.x)
+// note: some architectures have means of doing 
+// fixed point conversion when the fix depth is
+// specified as an immediate.. but there is no way 
+// to guarantee an immediate as a parameter to function
+// like this.
+FORCEINLINE void ConvertStoreAsIntsSIMD(intx4 * RESTRICT pDest, const fltx4 &vSrc)
+{
+	vst1q_s32( pDest.Base(), vcvtq_s32_f32( vSrc ) );
 }
 
 #else
