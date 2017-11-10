@@ -1073,11 +1073,24 @@ public:
 	// Set the priority
 	bool SetPriority( int );
 
+	// Request a thread to suspend, this must ONLY be called from the thread itself, not the main thread
+	// This suspend variant causes the thread in question to suspend at a known point in its execution
+	// which means you don't risk the global deadlocks/hangs potentially caused by the raw Suspend() call
+	void SuspendCooperative();
+
+	// Resume a previously suspended thread from the Cooperative call
+	void ResumeCooperative();
+
+	// wait for a thread to execute its SuspendCooperative call 
+	void BWaitForThreadSuspendCooperative();
+
+#ifdef _WIN32
 	// Suspend a thread
 	unsigned Suspend();
 
 	// Resume a suspended thread
 	unsigned Resume();
+#endif
 
 	// Force hard-termination of thread.  Used for critical failures.
 	bool Terminate( int exitCode = 0 );
@@ -1155,6 +1168,9 @@ private:
 #elif _LINUX
 	pthread_t m_threadId;
 #endif
+	CInterlockedInt m_nSuspendCount;
+	CThreadEvent m_SuspendEvent;
+	CThreadEvent m_SuspendEventSignal;
 	int		m_result;
 	char	m_szName[32];
 	void *	m_pStackBase;

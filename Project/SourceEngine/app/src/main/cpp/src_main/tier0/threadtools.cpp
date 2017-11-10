@@ -1304,6 +1304,9 @@ CThread::CThread()
 	m_hThread( NULL ),
 #endif
 	m_threadId( 0 ),
+	m_nSuspendCount( 0 ),
+	m_SuspendEvent( false ),
+	m_SuspendEventSignal( false ),
 	m_result( 0 )
 {
 	m_szName[0] = 0;
@@ -1564,27 +1567,50 @@ bool CThread::SetPriority(int priority)
 
 //---------------------------------------------------------
 
-unsigned CThread::Suspend()
+void CThread::SuspendCooperative()
 {
 #ifdef _WIN32
-	return ( SuspendThread(m_hThread) != 0 );
+	if ( m_hThread != ThreadGetCurrentHandle() )
 #elif _LINUX
-	Assert ( 0 );
-	return 0;
+	if ( m_threadId != ThreadGetCurrentId() )
 #endif
+		return;
+
+	m_SuspendEventSignal.Set();
+	m_SuspendEvent.Wait( TT_INFINITE );
 }
 
 //---------------------------------------------------------
 
+void CThread::ResumeCooperative()
+{
+	m_SuspendEvent.Set();
+}
+
+//---------------------------------------------------------
+
+void CThread::BWaitForThreadSuspendCooperative()
+{
+	m_SuspendEventSignal.Wait( TT_INFINITE );
+}
+
+//---------------------------------------------------------
+
+#ifdef _WIN32
+unsigned CThread::Suspend()
+{
+	return ( SuspendThread(m_hThread) != 0 );
+}
+#endif
+
+//---------------------------------------------------------
+
+#ifdef _WIN32
 unsigned CThread::Resume()
 {
-#ifdef _WIN32
 	return ( ResumeThread(m_hThread) != 0 );
-#elif _LINUX
-	Assert ( 0 );
-	return 0;
-#endif
 }
+#endif
 
 //---------------------------------------------------------
 
