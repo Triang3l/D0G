@@ -24,6 +24,9 @@ typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 #include <pthread.h>
 #include <sys/time.h>
 #include <unistd.h>
+#ifdef __ANDROID__
+#include <sys/syscall.h>
+#endif
 #define GetLastError() errno
 typedef void *LPVOID;
 #define max(a,b)  (((a) > (b)) ? (a) : (b))
@@ -193,9 +196,12 @@ void ThreadSetAffinity( ThreadHandle_t hThread, int nAffinityMask )
 		hThread = ThreadGetCurrentHandle();
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	SetThreadAffinityMask( hThread, nAffinityMask );
-#elif _LINUX
+#elif defined(__ANDROID__)
+	// Requires API 21+.
+	// syscall( __NR_sched_setaffinity, pthread_gettid_np( (pthread_t)hThread ), sizeof( nAffinityMask ), &nAffinityMask );
+#elif defined(_LINUX)
 // 	cpu_set_t cpuSet;
 // 	CPU_ZERO( cpuSet );
 // 	for( int i = 0 ; i < 32; i++ )
