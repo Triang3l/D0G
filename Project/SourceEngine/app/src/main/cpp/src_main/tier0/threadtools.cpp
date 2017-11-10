@@ -265,7 +265,7 @@ bool ThreadJoin( ThreadHandle_t hThread, unsigned timeout )
 
 void ThreadSetDebugName( ThreadId_t id, const char *pszName )
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	if ( Plat_IsInDebugSession() )
 	{
 #define MS_VC_EXCEPTION 0x406d1388
@@ -292,6 +292,8 @@ void ThreadSetDebugName( ThreadId_t id, const char *pszName )
 		{
 		}
 	}
+#elif defined(_LINUX)
+	pthread_setname_np( (pthread_t)id, pszName );
 #endif
 }
 
