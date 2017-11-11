@@ -1828,7 +1828,14 @@ unsigned CWorkerThread::GetCallParam() const
 int CWorkerThread::BoostPriority()
 {
 	int iInitialPriority = GetPriority();
+#if defined( _WIN32 )
 	const int iNewPriority = ::GetThreadPriority(GetCurrentThread());
+#elif defined( _LINUX )
+	struct sched_param thread_param;
+	int policy;
+	pthread_getschedparam( pthread_self(), &policy, &thread_param );
+	const int iNewPriority = thread_param.sched_priority;
+#endif
 	if (iNewPriority > iInitialPriority)
 		SetPriority(iNewPriority);
 	return iInitialPriority;
