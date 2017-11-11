@@ -16,6 +16,7 @@
 #elif _LINUX
 #include <ctype.h>
 #include <wchar.h>
+#include <math.h>
 #endif
 
 #include <string.h>

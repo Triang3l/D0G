@@ -223,27 +223,23 @@ int V_strncmp (const char *s1, const char *s2, int count)
 
 char *V_strnlwr(char *s, size_t count)
 {
-	Assert( count >= 0 );
+	// Assert( count >= 0 ); tautology since size_t is unsigned
 	AssertValidStringPtr( s, count );
 
 	char* pRet = s;
-	if ( !s )
+	if ( !s || !count )
 		return s;
 
-	while ( --count >= 0 )
+	while ( -- count > 0 )
 	{
 		if ( !*s )
-			break;
+			return pRet; // reached end of string
 
 		*s = tolower( *s );
 		++s;
 	}
 
-	if ( count > 0 )
-	{
-		s[count-1] = 0;
-	}
-
+	*s = 0; // null-terminate original string at "count-1"
 	return pRet;
 }
 
@@ -681,7 +677,13 @@ int V_vsnprintf( char *pDest, int maxLen, char const *pFormat, va_list params )
 	AssertValidWritePtr( pDest, maxLen );
 	AssertValidStringPtr( pFormat );
 
+#ifdef _WIN32
 	int len = _vsnprintf( pDest, maxLen, pFormat, params );
+#elif _LINUX
+	int len = vsnprintf( pDest, maxLen, pFormat, params );
+#else
+	#error "define vsnprintf type."
+#endif
 
 	if( len < 0 )
 	{
@@ -1391,7 +1393,7 @@ bool V_ExtractFilePath (const char *path, char *dest, int destSize )
 //-----------------------------------------------------------------------------
 void V_ExtractFileExtension( const char *path, char *dest, int destSize )
 {
-	*dest = NULL;
+	*dest = 0;
 	const char * extension = V_GetFileExtension( path );
 	if ( NULL != extension )
 		V_strncpy( dest, extension, destSize );

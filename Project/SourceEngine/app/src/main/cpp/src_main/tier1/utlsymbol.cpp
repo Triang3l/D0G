@@ -128,10 +128,16 @@ bool CUtlSymbolTable::CLess::operator()( const CStringPoolIndex &i1, const CStri
 	const char* str2 = (i2 == INVALID_STRING_INDEX) ? pTable->m_pUserSearchString :
 													  pTable->StringFromIndex( i2 );
 
+	if ( !str1 && str2 )
+		return false;
+	if ( !str2 && str1 )
+		return true;
+	if ( !str1 && !str2 )
+		return false;
 	if ( !pTable->m_bInsensitive )
-		return strcmp( str1, str2 ) < 0;
+		return V_strcmp( str1, str2 ) < 0;
 	else
-		return strcmpi( str1, str2 ) < 0;
+		return V_stricmp( str1, str2 ) < 0;
 }
 
 
@@ -344,7 +350,7 @@ FileNameHandle_t CUtlFilenameSymbolTable::FindFileName( const char *pFileName )
 	handle.file = m_StringPool.FindStringHandle(filename);
 	m_lock.UnlockRead();
 
-	if ( handle.path == NULL || handle.file == NULL )
+	if ( handle.path == 0 || handle.file == 0 )
 		return NULL;
 
 	return *( FileNameHandle_t * )( &handle );

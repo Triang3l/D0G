@@ -420,7 +420,9 @@ FORCEINLINE void VectorMultiply( const Vector& a, const Vector& b, Vector& resul
 FORCEINLINE void VectorDivide( const Vector& a, vec_t b, Vector& result );
 FORCEINLINE void VectorDivide( const Vector& a, const Vector& b, Vector& result );
 inline void VectorScale ( const Vector& in, vec_t scale, Vector& result );
-inline void VectorMA( const Vector& start, float scale, const Vector& direction, Vector& dest );
+// Don't mark this as inline in its function declaration. That's only necessary on its
+// definition, and 'inline' here leads to gcc warnings.
+void VectorMA( const Vector& start, float scale, const Vector& direction, Vector& dest );
 
 // Vector equality with tolerance
 bool VectorsAreEqual( const Vector& src1, const Vector& src2, float tolerance = 0.0f );
