@@ -81,6 +81,7 @@ public:
 	CUtlEnvelope<const char> &operator=( const CUtlEnvelope<const char *> &from )
 	{
 		m_string = from.m_string;
+		return *this;
 	}
 
 	operator char *()
