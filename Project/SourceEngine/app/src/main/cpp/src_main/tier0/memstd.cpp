@@ -508,7 +508,7 @@ void *CSmallBlockHeap::Realloc( void *p, size_t nBytes )
 
 	if ( pNewBlock )
 	{
-		int nBytesCopy = min( nBytes, pOldPool->GetBlockSize() );
+		int nBytesCopy = MIN( nBytes, pOldPool->GetBlockSize() );
 		memcpy( pNewBlock, p, nBytesCopy );
 	}
 
@@ -901,7 +901,7 @@ void *CX360SmallBlockHeap::Realloc( void *p, size_t nBytes )
 
 	if ( pNewBlock )
 	{
-		int nBytesCopy = min( nBytes, pOldPool->GetBlockSize() );
+		int nBytesCopy = MIN( nBytes, pOldPool->GetBlockSize() );
 		memcpy( pNewBlock, p, nBytesCopy );
 	}
 

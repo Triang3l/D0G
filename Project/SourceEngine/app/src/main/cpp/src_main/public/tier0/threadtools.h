@@ -945,7 +945,7 @@ inline int ThreadWaitForEvents( int nEvents, CThreadEvent * const *pEvents, bool
 	return TW_TIMEOUT;
 #else
 	HANDLE handles[64];
-	for ( unsigned int i = 0; i < min( nEvents, ARRAYSIZE(handles) ); i++ )
+	for ( unsigned int i = 0; i < MIN( nEvents, ARRAYSIZE(handles) ); i++ )
 		handles[i] = pEvents[i]->GetHandle();
 	return ThreadWaitForObjects( nEvents, handles, bWaitAll, timeout );
 #endif

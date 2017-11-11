@@ -1153,7 +1153,7 @@ void CVProfile::OutputReport( int type, const tchar *pszStartNode, int budgetGro
 #endif
 #endif
 
-	g_TotalFrames = max( NumFramesSampled() - 1, 1 );
+	g_TotalFrames = MAX( NumFramesSampled() - 1, 1 );
 	
 	if ( NumFramesSampled() == 0 || GetTotalTimeSampled() == 0)
 		Msg( _T("No samples\n") );
@@ -1167,7 +1167,7 @@ void CVProfile::OutputReport( int type, const tchar *pszStartNode, int budgetGro
 			Msg( _T("Peak %.2f ms frame\n"), GetPeakFrameTime() );
 			
 			double timeAccountedFor = 100.0 - ( m_Root.GetTotalTimeLessChildren() / m_Root.GetTotalTime() );
-			Msg( _T("%.0f pct of time accounted for\n"), min( 100.0, timeAccountedFor ) );
+			Msg( _T("%.0f pct of time accounted for\n"), MIN( 100.0, timeAccountedFor ) );
 			Msg( _T("\n") );
 		}
 
@@ -1425,7 +1425,7 @@ int CVProfile::AddBudgetGroupName( const tchar *pBudgetGroupName, int budgetFlag
 	if( m_nBudgetGroupNames + 1 > m_nBudgetGroupNamesAllocated )
 	{
 		m_nBudgetGroupNamesAllocated *= 2;
-		m_nBudgetGroupNamesAllocated = max( m_nBudgetGroupNames + 6, m_nBudgetGroupNamesAllocated );
+		m_nBudgetGroupNamesAllocated = MAX( m_nBudgetGroupNames + 6, m_nBudgetGroupNamesAllocated );
 		
 		CBudgetGroup *pNew = new CBudgetGroup[ m_nBudgetGroupNamesAllocated ];
 		for ( int i=0; i < m_nBudgetGroupNames; i++ )

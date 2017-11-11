@@ -29,7 +29,6 @@ typedef PTHREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
 #endif
 #define GetLastError() errno
 typedef void *LPVOID;
-#define max(a,b)  (((a) > (b)) ? (a) : (b))
 #endif
 #include <memory.h>
 #include "tier0/threadtools.h"
@@ -1397,7 +1396,7 @@ bool CThread::Start( unsigned nBytesStack )
 	ThreadInit_t init = { this, &bInitSuccess };
 	pthread_attr_t attr;
 	pthread_attr_init( &attr );
-	pthread_attr_setstacksize( &attr, max( nBytesStack, 1024*1024 ) );
+	pthread_attr_setstacksize( &attr, MAX( nBytesStack, 1024*1024 ) );
 	if ( pthread_create( &m_threadId, &attr, (void *(*)(void *))GetThreadProc(), new ThreadInit_t( init ) ) != 0 )
 	{
 		AssertMsg1( 0, "Failed to create thread (error 0x%x)", GetLastError() );

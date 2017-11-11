@@ -70,19 +70,21 @@ inline T AlignValue( T val, unsigned alignment )
 // In case this ever changes
 #define M_PI			3.14159265358979323846
 
-#ifndef min
-	#define min(a,b)  (((a) < (b)) ? (a) : (b))
+#ifndef MIN
+	#define MIN(a,b)  (((a) < (b)) ? (a) : (b))
 #endif
 
-#ifndef max
-	#define max(a,b)  (((a) > (b)) ? (a) : (b))
+#ifndef MAX
+	#define MAX(a,b)  (((a) > (b)) ? (a) : (b))
 #endif
 
-#if !defined(_X360)
-#define fpmin min
-#define fpmax max
+#if defined(__GNUC__)
+#define fpmin __builtin_fminf
+#define fpmax __builtin_fmaxf
+#elif !defined(_X360)
+#define fpmin MIN
+#define fpmax MAX
 #endif
-
 #ifdef __cplusplus
 	template< class T >
 	inline T clamp( T const &val, T const &minVal, T const &maxVal )
