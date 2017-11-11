@@ -24,8 +24,6 @@
 
 #include "tier0/memdbgon.h"
 
-#ifdef _WIN32
-
 //-----------------------------------------------------------------------------
 
 inline void ServiceJobAndRelease( CJob *pJob, int iThread = -1 )
@@ -132,7 +130,7 @@ public:
 		return false;
 	}
 
-	HANDLE GetEventHandle()
+	CThreadEvent &GetEventHandle()
 	{
 		return m_JobAvailableEvent;
 	}
@@ -172,6 +170,8 @@ private:
 //
 //-----------------------------------------------------------------------------
 
+class CJobThread;
+
 class CThreadPool : public CRefCounted1<IThreadPool, CRefCountServiceMT>
 {
 public:
@@ -202,7 +202,7 @@ public:
 	//-----------------------------------------------------
 	// Offer the current thread to the pool
 	//-----------------------------------------------------
-	virtual int YieldWait( CThreadEvent *pEvents, int nEvents, bool bWaitAll = true, unsigned timeout = TT_INFINITE );
+	virtual int YieldWait( CThreadEvent **pEvents, int nEvents, bool bWaitAll = true, unsigned timeout = TT_INFINITE );
 	virtual int YieldWait( CJob **, int nJobs, bool bWaitAll = true, unsigned timeout = TT_INFINITE );
 	void Yield( unsigned timeout );
 
@@ -230,8 +230,6 @@ public:
 
 	virtual void Reserved1() {}
 
-	void WaitForIdle( bool bAll = true );
-
 private:
 	enum
 	{
@@ -256,7 +254,6 @@ private:
 	CJobQueue				m_SharedQueue;
 	CInterlockedInt			m_nIdleThreads;
 	CUtlVector<CJobThread *> m_Threads;
-	CUtlVector<HANDLE>		m_IdleEvents;
 
 	CThreadFastMutex		m_SuspendMutex;
 	int						m_nSuspend;
@@ -322,6 +319,7 @@ public:
 	}
 
 private:
+#ifdef _WIN32
 	unsigned Wait( int nHandles, HANDLE *pHandles )
 	{
 		unsigned waitResult;
@@ -335,6 +333,7 @@ private:
 #endif
 		return waitResult;
 	}
+#endif
 
 	int Run()
 	{
@@ -350,17 +349,29 @@ private:
 		// Wait for either a call from the master thread, or an item in the queue...
 		unsigned waitResult;
 		bool	 bExit = false;
+#ifdef _WIN32
 		HANDLE	 waitHandles[NUM_EVENTS];
 
-		waitHandles[CALL_FROM_MASTER]	= GetCallHandle();
-		waitHandles[SHARED_QUEUE]		= m_SharedQueue.GetEventHandle();
-		waitHandles[DIRECT_QUEUE] 		= m_DirectQueue.GetEventHandle();
+		waitHandles[CALL_FROM_MASTER]	= GetCallHandle().GetHandle();
+		waitHandles[SHARED_QUEUE]		= m_SharedQueue.GetEventHandle().GetHandle();
+		waitHandles[DIRECT_QUEUE] 		= m_DirectQueue.GetEventHandle().GetHandle();
+#else
+		CThreadEvent &callFromMasterEvent = GetCallHandle();
+		CThreadEvent &sharedQueueEvent = m_SharedQueue.GetEventHandle();
+		CThreadEvent &directQueueEvent = m_DirectQueue.GetEventHandle();
+#endif
 
 		m_pOwner->m_nIdleThreads++;
 		m_IdleEvent.Set();
+#ifdef _WIN32
 		while (!bExit &&
 			( waitResult = Wait( ARRAYSIZE(waitHandles), waitHandles ) ) != WAIT_FAILED )
 		{
+#else
+		while (!bExit)
+		{
+			while ( !sharedQueueEvent.Wait( 100 ) && !directQueueEvent.Wait( 10 ) && !callFromMasterEvent.Wait( 0 ) ) { }
+#endif
 			if ( PeekCall() )
 			{
 				switch ( GetCallParam() )
@@ -372,7 +383,11 @@ private:
 
 				case TPM_SUSPEND:
 					Reply( true );
+#ifdef _WIN32
 					Suspend();
+#else
+					SuspendCooperative();
+#endif
 					break;
 
 				default:
@@ -475,7 +490,7 @@ int CThreadPool::SuspendExecution()
 	if ( m_nSuspend == 0 )
 	{
 		// Make sure state is correct
-#ifdef _DEBUG
+#if defined( _DEBUG ) && defined( _WIN32 )
 		int curCount = m_Threads[0]->Suspend();
 		m_Threads[0]->Resume();
 		Assert( curCount == 0 );
@@ -495,15 +510,19 @@ int CThreadPool::SuspendExecution()
 		// here with the thread not actually suspended
 		for ( i = 0; i < m_Threads.Count(); i++ )
 		{
+#ifdef _WIN32
 			while ( m_Threads[i]->Suspend() == 0 )
 			{
 				m_Threads[i]->Resume();
 				ThreadSleep();
 			}
 			m_Threads[i]->Resume();
+#else
+			m_Threads[i]->BWaitForThreadSuspendCooperative();
+#endif
 		}
 
-#ifdef _DEBUG
+#if defined( _DEBUG ) && defined( _WIN32 )
 		curCount = m_Threads[0]->Suspend();
 		m_Threads[0]->Resume();
 		Assert( curCount > 0 );
@@ -524,7 +543,11 @@ int CThreadPool::ResumeExecution()
 	{
 		for ( int i = 0; i < m_Threads.Count(); i++ )
 		{
+#ifdef _WIN32
 			m_Threads[i]->Resume();
+#else
+			m_Threads[i]->ResumeCooperative();
+#endif
 		}
 	}
 	return result;
@@ -532,14 +555,7 @@ int CThreadPool::ResumeExecution()
 
 //---------------------------------------------------------
 
-void CThreadPool::WaitForIdle( bool bAll )
-{
-	WaitForMultipleObjects( m_IdleEvents.Count(), m_IdleEvents.Base(), bAll, 60000 );
-}
-
-//---------------------------------------------------------
-
-int CThreadPool::YieldWait( CThreadEvent *pEvents, int nEvents, bool bWaitAll, unsigned timeout )
+int CThreadPool::YieldWait( CThreadEvent **pEvents, int nEvents, bool bWaitAll, unsigned timeout )
 {
 	Assert( timeout == TT_INFINITE ); // unimplemented
 	int result;
@@ -564,18 +580,18 @@ int CThreadPool::YieldWait( CThreadEvent *pEvents, int nEvents, bool bWaitAll, u
 
 int CThreadPool::YieldWait( CJob **ppJobs, int nJobs, bool bWaitAll, unsigned timeout )
 {
-	CUtlVectorFixed<HANDLE, 64> handles;
-	if ( nJobs > handles.NumAllocated() - 2 )
+	CUtlVectorFixed<CThreadEvent *, 64> events;
+	if ( nJobs > events.NumAllocated() - 2 )
 	{
 		return TW_FAILED;
 	}
 
 	for ( int i = 0; i < nJobs; i++ )
 	{
-		handles.AddToTail( *(ppJobs[i]->AccessEvent()) );
+		events.AddToTail( ppJobs[i]->AccessEvent() );
 	}
 
-	return YieldWait( (CThreadEvent *)handles.Base(), handles.Count(), bWaitAll, timeout);
+	return YieldWait( events.Base(), events.Count(), bWaitAll, timeout);
 }
 
 //---------------------------------------------------------
@@ -875,6 +891,7 @@ bool CThreadPool::Start( const ThreadPoolStartParams_t &startParams, const char 
 		}
 	}
 
+#ifndef __ANDROID__
 	int priority = startParams.iThreadPriority;
 
 	if ( priority == SHRT_MIN )
@@ -898,11 +915,11 @@ bool CThreadPool::Start( const ThreadPoolStartParams_t &startParams, const char 
 	{
 		bDistribute = !startParams.bIOThreads;
 	}
+#endif
 
 	//--------------------------------------------------------
 
 	m_Threads.EnsureCapacity( nThreads );
-	m_IdleEvents.EnsureCapacity( nThreads );
 
 	if ( !pszName )
 	{
@@ -911,16 +928,18 @@ bool CThreadPool::Start( const ThreadPoolStartParams_t &startParams, const char 
 	while ( nThreads-- )
 	{
 		int iThread = m_Threads.AddToTail();
-		m_IdleEvents.AddToTail();
 		m_Threads[iThread] = new CJobThread( this, iThread );
-		m_IdleEvents[iThread] = m_Threads[iThread]->GetIdleEvent();
 		m_Threads[iThread]->Start( nStackSize );
 		m_Threads[iThread]->GetIdleEvent().Wait();
 		ThreadSetDebugName( m_Threads[iThread]->GetThreadId(), CFmtStr( "%s%d", pszName, iThread ) );
+#ifndef __ANDROID__
 		ThreadSetPriority( (ThreadHandle_t)m_Threads[iThread]->GetThreadHandle(), priority );
+#endif
 	}
 
+#ifndef __ANDROID__
 	Distribute( bDistribute, startParams.bUseAffinityTable ? (int *)startParams.iAffinityTable : NULL );
+#endif
 
 	return true;
 }
@@ -929,6 +948,7 @@ bool CThreadPool::Start( const ThreadPoolStartParams_t &startParams, const char 
 
 void CThreadPool::Distribute( bool bDistribute, int *pAffinityTable )
 {
+#ifndef __ANDROID__
 	if ( bDistribute )
 	{
 		const CPUInformation &ci = *GetCPUInformation();
@@ -974,6 +994,7 @@ void CThreadPool::Distribute( bool bDistribute, int *pAffinityTable )
 			}
 		}
 	}
+#endif
 }
 
 //---------------------------------------------------------
@@ -987,7 +1008,11 @@ bool CThreadPool::Stop( int timeout )
 
 	for ( int i = 0; i < m_Threads.Count(); ++i )
 	{
+#ifdef _WIN32
 		while( m_Threads[i]->GetThreadHandle() )
+#elif _LINUX
+		while( m_Threads[i]->GetThreadId() )
+#endif
 		{
 			ThreadSleep( 0 );
 		}
@@ -997,7 +1022,6 @@ bool CThreadPool::Stop( int timeout )
 	m_SharedQueue.Flush();
 	m_nIdleThreads = 0;
 	m_Threads.RemoveAll();
-	m_IdleEvents.RemoveAll();
 
 	return true;
 }
@@ -1022,31 +1046,6 @@ CJob *CThreadPool::GetDummyJob()
 	dummyJob.AddRef();
 	return &dummyJob;
 }
-
-//-----------------------------------------------------------------------------
-
-#elif defined( _LINUX )
-
-IThreadPool *g_pThreadPool = NULL;
-
-JOB_INTERFACE IThreadPool *CreateThreadPool()
-{
-	// No threadpool implementation on Linux yet. We -should- be able to use 99% of the Windows implementation here
-	// because it mostly relies on threadtools.h. The main difference is that it requires WaitForMultipleObjects,
-	// which we don't (YET) have an equivalent for in threadtools.h.
-	Assert( false );
-	return NULL;
-}
-
-JOB_INTERFACE void DestroyThreadPool( IThreadPool *pPool )
-{
-}
-
-#else
-
-#error( "No threadpool implementation for platform" )
-
-#endif
 
 #if !defined( _LINUX )
 namespace ThreadPoolTest 

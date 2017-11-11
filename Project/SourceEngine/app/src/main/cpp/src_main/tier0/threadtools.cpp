@@ -1494,14 +1494,14 @@ HANDLE CThread::GetThreadHandle()
 	return m_hThread;
 }
 
+#endif
+
 //---------------------------------------------------------
 
 uint CThread::GetThreadId()
 {
 	return m_threadId;
 }
-
-#endif
 
 //---------------------------------------------------------
 
@@ -1788,7 +1788,6 @@ unsigned __stdcall CThread::ThreadProc(LPVOID pv)
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
-#ifdef _WIN32
 CWorkerThread::CWorkerThread()
 :	m_EventSend(true),                 // must be manual-reset for PeekCall()
 	m_EventComplete(true),             // must be manual-reset to handle multiple wait with thread properly
@@ -1813,7 +1812,7 @@ int CWorkerThread::CallMaster(unsigned dw, unsigned timeout)
 
 //---------------------------------------------------------
 
-HANDLE CWorkerThread::GetCallHandle()
+CThreadEvent &CWorkerThread::GetCallHandle()
 {
 	return m_EventSend;
 }
@@ -1838,10 +1837,20 @@ int CWorkerThread::BoostPriority()
 
 //---------------------------------------------------------
 
+#ifdef _WIN32
 static uint32 __stdcall DefaultWaitFunc( uint32 nHandles, const HANDLE*pHandles, int bWaitAll, uint32 timeout )
 {
 	return VCRHook_WaitForMultipleObjects( nHandles, (const void **)pHandles, bWaitAll, timeout );
 }
+#else
+static uint32 DefaultWaitFunc( uint32 nHandles, CThreadEvent * const *pEvents, int bWaitAll, uint32 timeout )
+{
+	int result = ThreadWaitForEvents( nHandles, pEvents, bWaitAll, timeout );
+	if ( result == WAIT_OBJECT_0 )
+		return 1;
+	return result;
+}
+#endif
 
 
 int CWorkerThread::Call(unsigned dwParam, unsigned timeout, bool fBoostPriority, WaitFunc_t pfnWait)
@@ -1853,11 +1862,13 @@ int CWorkerThread::Call(unsigned dwParam, unsigned timeout, bool fBoostPriority,
 	if (!IsAlive())
 		return WTCR_FAIL;
 
+#ifndef __ANDROID__
 	int iInitialPriority = 0;
 	if (fBoostPriority)
 	{
 		iInitialPriority = BoostPriority();
 	}
+#endif
 
 	// set the parameter, signal the worker thread, wait for the completion to be signaled
 	m_Param = dwParam;
@@ -1867,8 +1878,10 @@ int CWorkerThread::Call(unsigned dwParam, unsigned timeout, bool fBoostPriority,
 
 	WaitForReply( timeout, pfnWait );
 
+#ifndef __ANDROID__
 	if (fBoostPriority)
 		SetPriority(iInitialPriority);
+#endif
 
 	return m_ReturnVal;
 }
@@ -1890,23 +1903,32 @@ int CWorkerThread::WaitForReply( unsigned timeout, WaitFunc_t pfnWait )
 		pfnWait = DefaultWaitFunc;
 	}
 
+#ifdef _WIN32
 	HANDLE waits[] =
 	{
 		GetThreadHandle(),
-		m_EventComplete
+		m_EventComplete.GetHandle()
 	};
+#else
+	CThreadEvent *waits[] =
+	{
+		&m_EventComplete
+	};
+#endif
 
 	unsigned result;
 	bool bInDebugger = Plat_IsInDebugSession();
 
 	do
 	{
+#ifdef _WIN32
 		// Make sure the thread handle hasn't been closed
 		if ( !GetThreadHandle() )
 		{
 			result = WAIT_OBJECT_0 + 1;
 			break;
 		}
+#endif
 
 		result = (*pfnWait)((sizeof(waits) / sizeof(waits[0])), waits, false,
 			(timeout != TT_INFINITE) ? timeout : 30000);
@@ -1997,6 +2019,5 @@ void CWorkerThread::Reply(unsigned dw)
 	// Tell the client we're finished
 	m_EventComplete.Set();
 }
-#endif // _WIN32
 
 //-----------------------------------------------------------------------------

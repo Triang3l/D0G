@@ -414,7 +414,7 @@ typedef void * HINSTANCE;
 #define  stackfree( _p )   0
 #elif _LINUX
 // Alloca defined for this platform
-#define  stackalloc( _size ) _alloca( ALIGN_VALUE( _size, 16 ) )
+#define  stackalloc( _size ) alloca( ALIGN_VALUE( _size, 16 ) )
 #define  stackfree( _p )   0
 #endif
 
