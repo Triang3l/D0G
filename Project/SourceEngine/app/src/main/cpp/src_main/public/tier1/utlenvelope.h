@@ -78,7 +78,7 @@ public:
 		m_string = from.m_string;
 	}
 
-	CUtlEnvelope<const char> &operator=( const CUtlEnvelope<const char *> &from )
+	CUtlEnvelope<const char *> &operator=( const CUtlEnvelope<const char *> &from )
 	{
 		m_string = from.m_string;
 		return *this;
