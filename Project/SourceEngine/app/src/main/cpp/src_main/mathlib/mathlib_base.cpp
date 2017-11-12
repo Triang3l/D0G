@@ -10,6 +10,7 @@
 #include <float.h>	// Needed for FLT_EPSILON
 
 #include "tier0/basetypes.h"
+#include "tier0/platform.h"
 #include <memory.h>
 #include "tier0/dbg.h"
 
@@ -21,7 +22,7 @@
 
 #include "mathlib/mathlib.h"
 #include "mathlib/vector.h"
-#if !defined( _X360 )
+#if defined( __i386__ )
 #include "mathlib/amd3dx.h"
 #include "3dnow.h"
 #include "sse.h"
@@ -3200,7 +3201,7 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 
 	// FIXME: Hook SSE into VectorAligned + Vector4DAligned
 
-#if !defined( _X360 )
+#if defined( __i386__ )
 	// Grab the processor information:
 	const CPUInformation& pi = *GetCPUInformation();
 

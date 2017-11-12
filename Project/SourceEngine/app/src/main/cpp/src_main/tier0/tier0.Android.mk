@@ -2,7 +2,8 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := tier0
 
-LOCAL_ARM_NEON := true
+# Contains the NEON check.
+LOCAL_ARM_NEON := false
 
 LOCAL_C_INCLUDES := \
   $(LOCAL_PATH)/../common \
