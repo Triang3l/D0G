@@ -8,6 +8,7 @@ APP_CFLAGS := \
   -Wno-vexing-parse
 APP_CPPFLAGS := -fexceptions -frtti -std=c++11
 APP_MODULES := \
+  filesystem_stdio \
   mathlib \
   tier0 \
   tier1 \
