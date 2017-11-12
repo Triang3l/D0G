@@ -13,7 +13,8 @@ APP_MODULES := \
   tier0 \
   tier1 \
   tier2 \
-  vstdlib
+  vstdlib \
+  vtf
 APP_OPTIM := release
 APP_PLATFORM := android-16
 APP_STL := c++_shared
