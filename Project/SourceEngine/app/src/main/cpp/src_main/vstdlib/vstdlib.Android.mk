@@ -12,13 +12,14 @@ LOCAL_C_INCLUDES := \
 LOCAL_CFLAGS := -DVSTDLIB_DLL_EXPORT
 
 LOCAL_SRC_FILES := \
-  ../public/tier0/memoverride.cpp \
   cvar.cpp \
   jobthread.cpp \
   KeyValuesSystem.cpp \
   random.cpp \
-  vcover.cpp
+  vcover.cpp \
+  ../public/tier0/memoverride.cpp
 
-LOCAL_STATIC_LIBRARIES := tier0 tier1
+LOCAL_SHARED_LIBRARIES := tier0
+LOCAL_STATIC_LIBRARIES := tier1
 
 include $(BUILD_SHARED_LIBRARY)

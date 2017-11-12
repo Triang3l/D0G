@@ -7,7 +7,11 @@ APP_CFLAGS := \
   -Wno-undefined-bool-conversion \
   -Wno-vexing-parse
 APP_CPPFLAGS := -fexceptions -frtti -std=c++11
-APP_MODULES := tier0 tier1 vstdlib mathlib
+APP_MODULES := \
+  mathlib \
+  tier0 \
+  tier1 \
+  vstdlib
 APP_OPTIM := release
 APP_PLATFORM := android-16
 APP_STL := c++_shared
