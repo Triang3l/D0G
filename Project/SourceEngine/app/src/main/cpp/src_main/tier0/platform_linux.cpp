@@ -12,6 +12,9 @@
 
 #include <sys/time.h>
 #include <unistd.h>
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
 
 double Plat_FloatTime()
 {
@@ -54,6 +57,18 @@ unsigned long Plat_MSTime()
 bool vtune( bool resume )
 {
 	return false;
+}
+
+bool Plat_IsInDebugSession()
+{
+	return false;
+}
+
+void Plat_DebugString( const char * psz )
+{
+#ifdef __ANDROID__
+	__android_log_write( ANDROID_LOG_DEBUG, "Source Engine", psz );
+#endif
 }
 
 

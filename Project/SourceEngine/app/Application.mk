@@ -11,6 +11,7 @@ APP_MODULES := \
   mathlib \
   tier0 \
   tier1 \
+  tier2 \
   vstdlib
 APP_OPTIM := release
 APP_PLATFORM := android-16

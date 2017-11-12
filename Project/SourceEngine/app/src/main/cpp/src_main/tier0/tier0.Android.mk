@@ -38,4 +38,6 @@ LOCAL_SRC_FILES := \
   vprof.cpp \
   win32consoleio.cpp
 
+LOCAL_LDLIBS := -llog
+
 include $(BUILD_SHARED_LIBRARY)

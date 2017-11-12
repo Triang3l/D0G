@@ -24,6 +24,9 @@
 #undef GetJob
 #undef AddJob
 
+typedef HANDLE WIN32_FIND_HANDLE;
+#define WIN32_FIND_INVALID_HANDLE_VALUE INVALID_HANDLE_VALUE
+
 #include "tier0/threadtools.h"
 #include <stdio.h>
 #include <sys/types.h>
@@ -35,8 +38,8 @@
 #elif defined(_LINUX)
 	#include <unistd.h> // unlink
 	#include "linux_support.h"
-	#define HANDLE int
-	#define INVALID_HANDLE_VALUE -1
+	typedef int WIN32_FIND_HANDLE;
+	#define WIN32_FIND_INVALID_HANDLE_VALUE -1
 
 	// undo the prepended "_" 's
 	#define _chmod chmod
@@ -742,7 +745,7 @@ public:
 		WIN32_FIND_DATA		findData;
 		int					currentSearchPathID;
 		CUtlVector<char>	wildCardString;
-		HANDLE				findHandle;
+		WIN32_FIND_HANDLE	findHandle;
 		CSearchPathsVisits	m_VisitedSearchPaths;	// This is a copy of IDs for the search paths we've visited, so avoids searching duplicate paths.
 		int					m_CurrentStoreID;		// CSearchPath::m_storeId of the current search path.
 		
@@ -808,9 +811,9 @@ protected:
 	virtual char *FS_fgets( char *dest, int destSize, FILE *fp ) = 0;
 	virtual int FS_stat( const char *path, struct _stat *buf ) = 0;
 	virtual int FS_chmod( const char *path, int pmode ) = 0;
-	virtual HANDLE FS_FindFirstFile( const char *findname, WIN32_FIND_DATA *dat) = 0;
-	virtual bool FS_FindNextFile(HANDLE handle, WIN32_FIND_DATA *dat) = 0;
-	virtual bool FS_FindClose(HANDLE handle) = 0;
+	virtual WIN32_FIND_HANDLE FS_FindFirstFile( const char *findname, WIN32_FIND_DATA *dat) = 0;
+	virtual bool FS_FindNextFile(WIN32_FIND_HANDLE handle, WIN32_FIND_DATA *dat) = 0;
+	virtual bool FS_FindClose(WIN32_FIND_HANDLE handle) = 0;
 	virtual int FS_GetSectorSize( FILE * ) { return 1; }
 
 #if defined( TRACK_BLOCKING_IO )

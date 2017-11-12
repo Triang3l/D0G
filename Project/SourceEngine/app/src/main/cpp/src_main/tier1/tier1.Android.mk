@@ -40,6 +40,7 @@ LOCAL_SRC_FILES := \
   utlbuffer.cpp \
   utlbufferutil.cpp \
   utlstring.cpp \
-  utlsymbol.cpp
+  utlsymbol.cpp \
+  v_qsort_r.c
 
 include $(BUILD_STATIC_LIBRARY)

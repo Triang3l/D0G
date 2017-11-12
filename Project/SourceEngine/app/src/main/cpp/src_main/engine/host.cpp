@@ -900,7 +900,7 @@ void Host_WriteConfiguration( const char *dirname, const char *filename )
 		}
 
 		// make a persistent copy that async will use and free
-		char *tempBlock = new char[configBuff.TellMaxPut()];
+		char *tempBlock = (char *)malloc( configBuff.TellMaxPut() );
 		Q_memcpy( tempBlock, configBuff.Base(), configBuff.TellMaxPut() );
 
 		// async write the buffer, and then free it

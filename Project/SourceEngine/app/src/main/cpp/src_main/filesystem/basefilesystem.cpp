@@ -806,23 +806,34 @@ int CPackFileHandle::Seek( int nOffset, int nWhence )
 {
 	if ( nWhence == SEEK_SET )
 	{
-		m_nFilePointer = nOffset;
+		m_nFilePointer = MAX( nOffset, 0 );
 	}
 	else if ( nWhence == SEEK_CUR )
 	{
-		m_nFilePointer += nOffset;
+		if ( nOffset < 0 && (unsigned int)(-nOffset) > m_nFilePointer )
+		{
+			m_nFilePointer = 0;
+		}
+		else
+		{
+			m_nFilePointer += nOffset;
+		}
 	}
 	else if ( nWhence == SEEK_END )
 	{
-		m_nFilePointer = m_nLength + nOffset;
+		nOffset = MIN( nOffset, 0 );
+		if ( (unsigned int)(-nOffset) > m_nLength )
+		{
+			m_nFilePointer = 0;
+		}
+		else
+		{
+			m_nFilePointer = m_nLength + nOffset;
+		}
 	}
 
 	// Clamp the file pointer to the actual bounds of the file:
-	if ( m_nFilePointer < 0 )
-	{
-		m_nFilePointer = 0;
-	} 
-	else if ( m_nFilePointer > m_nLength )
+	if ( m_nFilePointer > m_nLength )
 	{
 		m_nFilePointer = m_nLength;
 	}
@@ -1968,7 +1979,7 @@ bool CBaseFileSystem::RemoveSearchPath( const char *pPath, const char *pathID )
 	int c = m_SearchPaths.Count();
 	for( i = c - 1; i >= 0; i-- )
 	{
-		if ( newPath && m_SearchPaths[i].GetPath() != lookup )
+		if ( newPath[0] && m_SearchPaths[i].GetPath() != lookup )
 			continue;
 
 		if ( FilterByPathID( &m_SearchPaths[i], id ) )
@@ -2106,7 +2117,7 @@ bool CBaseFileSystem::ReadToBuffer( FileHandle_t fp, CUtlBuffer &buf, int nMaxBy
 	if ( nMaxBytes > 0 )
 	{
 		// can't read more than file has
-		nBytesToRead = min( nMaxBytes, nBytesToRead );
+		nBytesToRead = MIN( nMaxBytes, nBytesToRead );
 	}
 
 	int nBytesRead = 0;
@@ -2236,7 +2247,7 @@ int CBaseFileSystem::ReadFileEx( const char *pFileName, const char *pPath, void 
 	int nBytesRead = 0;
 	if ( nMaxBytes > 0 )
 	{
-		nBytesToRead = min( nMaxBytes, nBytesToRead );
+		nBytesToRead = MIN( nMaxBytes, nBytesToRead );
 		if ( bNullTerminate )
 		{
 			nBytesToRead--;
@@ -4075,10 +4086,8 @@ bool CBaseFileSystem::IsFileWritable( char const *pFileName, char const *pPathID
 		{
 #ifdef WIN32
 			if( buf.st_mode & _S_IWRITE )
-#elif LINUX
-			if( buf.st_mode & S_IWRITE )
 #else
-			if( buf.st_mode & S_IWRITE )
+			if( buf.st_mode & S_IWUSR )
 #endif
 			{
 				return true;
@@ -4097,10 +4106,8 @@ bool CBaseFileSystem::IsFileWritable( char const *pFileName, char const *pPathID
 		{
 #ifdef WIN32
 			if ( buf.st_mode & _S_IWRITE )
-#elif LINUX
-			if ( buf.st_mode & S_IWRITE )
 #else
-			if ( buf.st_mode & S_IWRITE )
+			if ( buf.st_mode & S_IWUSR )
 #endif
 			{
 				return true;
@@ -4118,7 +4125,7 @@ bool CBaseFileSystem::SetFileWritable( char const *pFileName, bool writable, con
 #ifdef _WIN32
 	int pmode = writable ? ( _S_IWRITE | _S_IREAD ) : ( _S_IREAD );
 #else
-	int pmode = writable ? ( S_IWRITE | S_IREAD ) : ( S_IREAD );
+	int pmode = writable ? ( S_IWUSR | S_IRUSR ) : ( S_IRUSR );
 #endif
 
 	char tempPathID[MAX_PATH];
@@ -4272,7 +4279,7 @@ const char *CBaseFileSystem::FindFirstHelper( const char *pWildCard, const char 
 	pFindData->wildCardString.AddMultipleToTail( maxlen );
 	Q_strncpy( pFindData->wildCardString.Base(), pWildCard, maxlen );
 	Q_FixSlashes( pFindData->wildCardString.Base() );
-	pFindData->findHandle = INVALID_HANDLE_VALUE;
+	pFindData->findHandle = WIN32_FIND_INVALID_HANDLE_VALUE;
 
 	if ( Q_IsAbsolutePath( pWildCard ) )
 	{
@@ -4305,12 +4312,12 @@ const char *CBaseFileSystem::FindFirstHelper( const char *pWildCard, const char 
 			pFindData->findHandle = FS_FindFirstFile( pTmpFileName, &pFindData->findData );
 			pFindData->m_CurrentStoreID = pSearchPath->m_storeId;
 
-			if( pFindData->findHandle != INVALID_HANDLE_VALUE )
+			if( pFindData->findHandle != WIN32_FIND_INVALID_HANDLE_VALUE )
 				break;
 		}
 	}
 
- 	if( pFindData->findHandle != INVALID_HANDLE_VALUE )
+ 	if( pFindData->findHandle != WIN32_FIND_INVALID_HANDLE_VALUE )
 	{
 		// Remember that we visited this file already.
 		pFindData->m_VisitedFiles.Insert( pFindData->findData.cFileName, 0 );
@@ -4356,11 +4363,11 @@ bool CBaseFileSystem::FindNextFileHelper( FindData_t *pFindData, int *pFoundStor
 
 	pFindData->currentSearchPathID++;
 
-	if ( pFindData->findHandle != INVALID_HANDLE_VALUE )
+	if ( pFindData->findHandle != WIN32_FIND_INVALID_HANDLE_VALUE )
 	{
 		FS_FindClose( pFindData->findHandle );
 	}
-	pFindData->findHandle = INVALID_HANDLE_VALUE;
+	pFindData->findHandle = WIN32_FIND_INVALID_HANDLE_VALUE;
 
 	int c = m_SearchPaths.Count();
 	for( ; pFindData->currentSearchPathID < c; ++pFindData->currentSearchPathID ) 
@@ -4383,7 +4390,7 @@ bool CBaseFileSystem::FindNextFileHelper( FindData_t *pFindData, int *pFoundStor
 		Q_FixSlashes( pTmpFileName );
 		pFindData->findHandle = FS_FindFirstFile( pTmpFileName, &pFindData->findData );
 		pFindData->m_CurrentStoreID = pSearchPath->m_storeId;
-		if( pFindData->findHandle != INVALID_HANDLE_VALUE )
+		if( pFindData->findHandle != WIN32_FIND_INVALID_HANDLE_VALUE )
 		{
 			if ( pFoundStoreID )
 				*pFoundStoreID = pFindData->m_CurrentStoreID;
@@ -4444,11 +4451,11 @@ void CBaseFileSystem::FindClose( FileFindHandle_t handle )
 	FindData_t *pFindData = &m_FindData[handle];
 	Assert(pFindData);
 
-	if ( pFindData->findHandle != INVALID_HANDLE_VALUE)
+	if ( pFindData->findHandle != WIN32_FIND_INVALID_HANDLE_VALUE)
 	{
 		FS_FindClose( pFindData->findHandle );
 	}
-	pFindData->findHandle = INVALID_HANDLE_VALUE;
+	pFindData->findHandle = WIN32_FIND_INVALID_HANDLE_VALUE;
 
 	pFindData->wildCardString.Purge();
 	m_FindData.Remove( handle );
@@ -4787,17 +4794,17 @@ void CBaseFileSystem::Warning( FileWarningLevel_t level, const char *fmt, ... )
     Q_vsnprintf( warningtext, sizeof( warningtext ), fmt, argptr );
     va_end( argptr );
 
+#ifndef __ANDROID__
 	// Dump to stdio
-	printf( warningtext );
+	printf( "%s", warningtext );
+#endif
 	if ( m_pfnWarning )
 	{
 		(*m_pfnWarning)( warningtext );
 	}
 	else
 	{
-#ifdef _WIN32
 		Plat_DebugString( warningtext );
-#endif
 	}
 }
 

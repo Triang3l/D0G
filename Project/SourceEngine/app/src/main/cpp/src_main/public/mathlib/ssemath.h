@@ -796,17 +796,6 @@ FORCEINLINE fltx4 ClampVectorSIMD( FLTX4 in, FLTX4 min, FLTX4 max)
 	return MaxSIMD( min, MinSIMD( max, in ) );
 }
 
-FORCEINLINE void TransposeSIMD( fltx4 & x, fltx4 & y, fltx4 & z, fltx4 & w)
-{
-	__asm__ __volatile__ (
-		"vzip.f32 %q0, %q1\n"
-		"vzip.f32 %q2, %q3\n"
-		"vswp %f0, %e2\n"
-		"vswp %f1, %e3\n"
-		"vswp %q1, %q2\n"
-		: "+w" (x), "+w" (y), "+w" (z), "+w" (w) );
-}
-
 // Squelch the w component of a vector to +0.0.
 // Most efficient when you say a = SetWToZeroSIMD(a) (avoids a copy)
 FORCEINLINE fltx4 SetWToZeroSIMD( const fltx4 & a )
@@ -1958,12 +1947,6 @@ FORCEINLINE fltx4 RotateRight2( const fltx4 & a )
 	return vextq_f32( a, a, 2 );
 }
 
-// a b c d -> c d a b
-FORCEINLINE fltx4 RotateRight2( const fltx4 & a )
-{
-	return vcombine_f32( vget_high_f32( a ), vget_low_f32( a ) );
-}
-
 FORCEINLINE fltx4 AddSIMD( const fltx4 & a, const fltx4 & b )				// a+b
 {
 	return vaddq_f32( a, b );
@@ -2058,16 +2041,16 @@ FORCEINLINE fltx4 NegSIMD(const fltx4 &a) // negate: -a
 FORCEINLINE int TestSignSIMD( const fltx4 & a )								// mask of which floats have the high bit set
 {
 	u32x4 retVal = vshlq_u32( vandq_u32( vreinterpretq_u32_f32( a ), g_SIMD_NEON_signmask ), g_SIMD_NEON_signshift ); // 1 || 2 || 4 || 8
-	retVal = vorrq_u32( mask, vextq_u32( mask, mask, 1 ) ); // 1+2 || 2+4 || 4+8 || 8+1
-	retVal = vorrq_u32( mask, vextq_u32( mask, mask, 2 ) ); // 1+2+4+8 || 2+4+8+1 || 4+8+1+2 || 8+1+2+4
+	retVal = vorrq_u32( retVal, vextq_u32( retVal, retVal, 1 ) ); // 1+2 || 2+4 || 4+8 || 8+1
+	retVal = vorrq_u32( retVal, vextq_u32( retVal, retVal, 2 ) ); // 1+2+4+8 || 2+4+8+1 || 4+8+1+2 || 8+1+2+4
 	return (int)vgetq_lane_u32( retVal, 0 );
 }
 
 FORCEINLINE bool IsAnyNegative( const fltx4 & a )							// (a.x < 0) || (a.y < 0) || (a.z < 0) || (a.w < 0)
 {
 	u32x4 retVal = vshrq_n_u32( vreinterpretq_u32_f32( a ), 31 );
-	retVal = vorrq_u32( mask, vextq_u32( mask, mask, 1 ) );
-	retVal = vorrq_u32( mask, vextq_u32( mask, mask, 2 ) );
+	retVal = vorrq_u32( retVal, vextq_u32( retVal, retVal, 1 ) );
+	retVal = vorrq_u32( retVal, vextq_u32( retVal, retVal, 2 ) );
 	return vgetq_lane_u32( retVal, 0 ) != 0;
 }
 
@@ -2075,8 +2058,8 @@ FORCEINLINE bool IsAnyNegative( const fltx4 & a )							// (a.x < 0) || (a.y < 0
 FORCEINLINE bool IsAnyPositive( const fltx4 & a )							// (a.x >= 0) || (a.y >= 0) || (a.z >= 0) || (a.w >= 0)
 {
 	u32x4 retVal = vshrq_n_u32( vreinterpretq_u32_f32( a ), 31 );
-	retVal = vandq_u32( mask, vextq_u32( mask, mask, 1 ) );
-	retVal = vandq_u32( mask, vextq_u32( mask, mask, 2 ) );
+	retVal = vandq_u32( retVal, vextq_u32( retVal, retVal, 1 ) );
+	retVal = vandq_u32( retVal, vextq_u32( retVal, retVal, 2 ) );
 	return vgetq_lane_u32( retVal, 0 ) == 0;
 }
 
@@ -2235,6 +2218,17 @@ FORCEINLINE fltx4 ClampVectorSIMD( FLTX4 in, FLTX4 min, FLTX4 max)
 	return MaxSIMD( min, MinSIMD( max, in ) );
 }
 
+FORCEINLINE void TransposeSIMD( fltx4 & x, fltx4 & y, fltx4 & z, fltx4 & w)
+{
+	__asm__ __volatile__ (
+		"vzip.f32 %q0, %q1\n"
+		"vzip.f32 %q2, %q3\n"
+		"vswp %f0, %e2\n"
+		"vswp %f1, %e3\n"
+		"vswp %q1, %q2\n"
+		: "+w" (x), "+w" (y), "+w" (z), "+w" (w) );
+}
+
 FORCEINLINE fltx4 FindLowestSIMD3( const fltx4 &a )
 {
 	// a is [x,y,z,G] (where G is garbage)
@@ -2346,7 +2340,7 @@ FORCEINLINE i32x4 IntShiftLeftWordSIMD(const i32x4 &vSrcA, const i32x4 &vSrcB)
 // like this.
 FORCEINLINE void ConvertStoreAsIntsSIMD(intx4 * RESTRICT pDest, const fltx4 &vSrc)
 {
-	vst1q_s32( pDest.Base(), vcvtq_s32_f32( vSrc ) );
+	vst1q_s32( pDest->Base(), vcvtq_s32_f32( vSrc ) );
 }
 
 #else
