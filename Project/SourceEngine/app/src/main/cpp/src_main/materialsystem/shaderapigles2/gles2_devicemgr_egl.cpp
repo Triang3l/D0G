@@ -2,6 +2,7 @@
 // D0G modifications by Triang3l, derivative work, in public domain if detached from Valve's work.
 
 #include "gles2_devicemgr_egl.h"
+#include "gles2_api.h"
 #include "tier0/dbg.h"
 #include <string.h>
 #ifdef __ANDROID__
@@ -14,8 +15,15 @@
 
 CShaderDeviceMgrEGL::CShaderDeviceMgrEGL() :
 		m_EGLDisplay(EGL_NO_DISPLAY),
-		m_EGLConfig(NULL), m_EGLConfigID(0),
-		m_EGLContext(EGL_NO_CONTEXT), m_EGLPbufferSurface(EGL_NO_SURFACE),
+		m_EGLConfig(NULL),
+		m_EGLConfigID(0),
+		m_EGLConfigStencilSize(0),
+		m_EGLConfigSamples(1),
+		m_EGLContext(EGL_NO_CONTEXT),
+		m_EGLPbuffer(EGL_NO_SURFACE),
+		m_EGLSurfaceWindow((EGLNativeWindowType) NULL),
+		m_EGLSurface(EGL_NO_SURFACE),
+		m_EGLContextActive(false),
 		m_GLES2Library(NULL) {}
 
 bool CShaderDeviceMgrEGL::InitWindowSystemInterface() {
@@ -107,11 +115,13 @@ bool CShaderDeviceMgrEGL::CreateInitGLESContext() {
 	}
 
 	eglMakeCurrent(m_EGLDisplay, m_EGLSurface, m_EGLSurface, m_EGLContext);
+	m_EGLContextActive = true;
 	return true;
 }
 
 void CShaderDeviceMgrEGL::DestroyInitGLESContext() {
 	if (m_EGLContext != EGL_NO_CONTEXT) {
+		m_EGLContextActive = false;
 		eglMakeCurrent(m_EGLDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 		eglDestroyContext(m_EGLDisplay, m_EGLContext);
 		m_EGLContext = EGL_NO_CONTEXT;
@@ -122,14 +132,14 @@ void CShaderDeviceMgrEGL::DestroyInitGLESContext() {
 	}
 }
 
-EGLConfig CShaderDeviceMgrEGL::RequestEGLConfig(int colorSize, int depthSize, int depthEncoding, int stencilSize, int minSwapInterval) {
+EGLConfig CShaderDeviceMgrEGL::RequestEGLConfig(int depthSize, int depthEncoding, int stencilSize, int minSwapInterval) {
 	int attribs[] = {
 		/*  0 */ EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 		/*  2 */ EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
-		/*  4 */ EGL_RED_SIZE, colorSize,
-		/*  6 */ EGL_GREEN_SIZE, colorSize,
-		/*  8 */ EGL_BLUE_SIZE, colorSize,
-		/* 10 */ EGL_ALPHA_SIZE, colorSize,
+		/*  4 */ EGL_RED_SIZE, 8,
+		/*  6 */ EGL_GREEN_SIZE, 8,
+		/*  8 */ EGL_BLUE_SIZE, 8,
+		/* 10 */ EGL_ALPHA_SIZE, 8,
 		/* 12 */ EGL_DEPTH_SIZE, depthSize,
 		/* 14 */ EGL_STENCIL_SIZE, stencilSize,
 		/* 16 */ EGL_MIN_SWAP_INTERVAL, minSwapInterval,
@@ -165,24 +175,23 @@ UpdateGLESContextResult_t CShaderDeviceMgrEGL::UpdateGLESContext(const ShaderDev
 
 	EGLConfig config;
 	int configID;
+	int stencilSize = m_EGLConfigStencilSize;
+	int samples = m_EGLConfigSamples;
 	if (requestConfig) {
 		config = NULL;
 		const int depthSizes[] = { 24, 16, 16 };
 		const int depthEncodings[] = { EGL_DONT_CARE, EGL_DEPTH_ENCODING_NONLINEAR_NV, EGL_DONT_CARE };
-		for (int colorSize = 8; colorSize >= 4; colorSize -= 4) {
-			for (unsigned int depthFormat = 0; depthFormat < (sizeof(depthSizes) / sizeof(depthSizes[0])); ++depthFormat) {
-				if (!m_EGLExt_DepthNonlinear && depthEncodings[depthFormat] != EGL_DONE_CARE) {
-					continue;
-				}
-				int depthSize = depthSizes[depthFormat], depthEncoding = depthEncodings[depthFormat];
-				for (int stencilSize = (info.m_bUseStencil ? 8 : 0); stencilSize >= 0; stencilSize -= 8) {
-					if (!info.m_bWaitForVSync) {
-						config = RequestEGLConfig(colorSize, depthSize, depthEncoding, stencilSize, 0);
-						if (config != NULL) { break; }
-					}
-					config = RequestEGLConfig(colorSize, depthSize, depthEncoding, stencilSize, EGL_DONT_CARE);
+		for (unsigned int depthFormat = 0; depthFormat < (sizeof(depthSizes) / sizeof(depthSizes[0])); ++depthFormat) {
+			if (!m_EGLExt_DepthNonlinear && depthEncodings[depthFormat] != EGL_DONE_CARE) {
+				continue;
+			}
+			int depthSize = depthSizes[depthFormat], depthEncoding = depthEncodings[depthFormat];
+			for (stencilSize = (info.m_bUseStencil ? 8 : 0); stencilSize >= 0; stencilSize -= 8) {
+				if (!info.m_bWaitForVSync) {
+					config = RequestEGLConfig(depthSize, depthEncoding, stencilSize, 0);
 					if (config != NULL) { break; }
 				}
+				config = RequestEGLConfig(depthSize, depthEncoding, stencilSize, EGL_DONT_CARE);
 				if (config != NULL) { break; }
 			}
 			if (config != NULL) { break; }
@@ -216,6 +225,11 @@ UpdateGLESContextResult_t CShaderDeviceMgrEGL::UpdateGLESContext(const ShaderDev
 	m_EGLConfig = config;
 	m_EGLConfigID = configID;
 
+	m_EGLConfigStencilSize = stencilSize; // In case eglGetConfigAttrib fails.
+	m_EGLConfigSamples = samples;
+	eglGetConfigAttrib(m_EGLDisplay, config, EGL_STENCIL_SIZE, &m_EGLConfigStencilSize);
+	eglGetConfigAttrib(m_EGLDisplay, config, EGL_SAMPLES, &m_EGLConfigSamples);
+
 	const int pbufferAttribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
 	m_EGLPbuffer = eglCreatePbufferSurface(m_EGLDisplay, config, pbufferAttribs);
 	if (m_EGLPbuffer == EGL_NO_SURFACE) {
@@ -235,7 +249,7 @@ UpdateGLESContextResult_t CShaderDeviceMgrEGL::UpdateGLESContext(const ShaderDev
 	return UPDATE_GLES_CONTEXT_CREATED;
 }
 
-bool UpdateGLESSurface(void *hWnd, unsigned int width, unsigned int height) {
+bool CShaderDeviceMgrEGL::UpdateGLESSurface(void *hWnd, int width, int height) {
 	if (m_EGLContext == EGL_NO_CONTEXT) {
 		AssertMsg(0, "OpenGL ES 2.0 context needs to be created before updating EGL surface.");
 		return false;
@@ -243,11 +257,13 @@ bool UpdateGLESSurface(void *hWnd, unsigned int width, unsigned int height) {
 
 	// Force because it may be the first call.
 	eglMakeCurrent(m_EGLDisplay, m_EGLPbuffer, m_EGLPbuffer, m_EGLContext);
+	m_EGLContextActive = true;
 
 	if (m_EGLSurface != EGL_NO_SURFACE) {
 		eglDestroySurface(m_EGLDisplay, m_EGLSurface);
 		m_EGLSurface = EGL_NO_SURFACE;
 	}
+	m_EGLSurfaceWindow = (EGLNativeWindowType) NULL;
 
 	if (hWnd == NULL) {
 		return true;
@@ -262,15 +278,44 @@ bool UpdateGLESSurface(void *hWnd, unsigned int width, unsigned int height) {
 		Warning("EGL ERROR: Failed to create a window surface.\n");
 		return false;
 	}
+	m_EGLSurfaceWindow = nativeWindow;
 	eglMakeCurrent(m_EGLDisplay, m_EGLSurface, m_EGLSurface, m_EGLContext);
+	m_EGLContextActive = true;
 	if (!m_EGLConfigRequest_WaitForVSync) {
 		eglSwapInterval(m_EGLDisplay, 0);
 	}
 	return true;
 }
 
+bool CShaderDeviceMgrEGL::ResizeCurrentGLESSurface(int width, int height) {
+	if (m_EGLSurfaceWindow == (EGLNativeWindowType) NULL) {
+		return true;
+	}
+	return UpdateGLESSurface((void *) m_EGLSurfaceWindow, width, height);
+}
+
+bool CShaderDeviceMgrEGL::IsGLESContextActive() const {
+	return m_EGLContextActive;
+}
+
+int CShaderDeviceMgrEGL::StencilBufferBits() const {
+	return m_EGLContextStencilSize;
+}
+
+bool CShaderDeviceMgrEGL::IsAAEnabled() const {
+	return m_EGLContextSamples > 1;
+}
+
+void CShaderDeviceMgrEGL::Present() {
+	if (m_EGLContextActive && m_EGLSurface != EGL_NO_SURFACE) {
+		eglSwapBuffers(m_EGLDisplay, m_EGLSurface);
+	}
+}
+
 void CShaderDeviceMgrEGL::ShutdownGLES() {
 	if (m_EGLContext != EGL_NO_CONTEXT) {
+		g_pShaderAPI->OnGLESContextShutdown();
+		m_EGLContextActive = false;
 		eglMakeCurrent(m_EGLDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 		eglDestroyContext(m_EGLDisplay, m_EGLContext);
 		m_EGLContext = EGL_NO_CONTEXT;

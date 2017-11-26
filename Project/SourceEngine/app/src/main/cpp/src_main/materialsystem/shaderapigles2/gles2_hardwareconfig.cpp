@@ -15,7 +15,7 @@ static CHardwareConfig s_HardwareConfig;
 CHardwareConfig *g_pHardwareConfig = &s_HardwareConfig;
 
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CHardwareConfig, IMaterialSystemHardwareConfig,
-		MATERIALSYSTEM_HARDWARECONFIG_INTERFACE_VERSION, s_HardwareConfig);
+		MATERIALSYSTEM_HARDWARECONFIG_INTERFACE_VERSION, s_HardwareConfig)
 
 CHardwareConfig::CHardwareConfig() {
 	memset(&m_Caps, 0, sizeof(m_Caps));

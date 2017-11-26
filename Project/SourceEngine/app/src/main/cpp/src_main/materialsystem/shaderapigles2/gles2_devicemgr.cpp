@@ -2,6 +2,7 @@
 // D0G modifications by Triang3l, derivative work, in public domain if detached from Valve's work.
 
 #include "gles2_devicemgr.h"
+#include "gles2_api.h"
 #include "gles2_glfuncs.h"
 #include "gles2_hardwareconfig.h"
 #include "materialsystem/imaterialsystem.h"
@@ -268,7 +269,7 @@ bool CShaderDeviceMgrBase::GetRecommendedConfigurationInfo(int nAdapter, int nDX
 }
 
 CreateInterfaceFn CShaderDeviceMgrBase::SetMode(void *hWnd, int nAdapter, const ShaderDeviceInfo_t &mode) {
-	return (ShaderAPI()->SetMode(hWnd, nAdapter, mode) ? ShaderInterfaceFactory : NULL);
+	return (g_pShaderAPI->SetMode(hWnd, nAdapter, mode) ? ShaderInterfaceFactory : NULL);
 }
 
 // EGL doesn't provide info about modes, and on Android, the size is obtained from a window.
@@ -295,7 +296,7 @@ void *CShaderDeviceMgrBase::ShaderInterfaceFactory(const char *pInterfaceName, i
 		*pReturnCode = IFACE_OK;
 	}
 	if (Q_stricmp(pInterfaceName, SHADER_DEVICE_INTERFACE_VERSION) == 0) {
-		return static_cast<IShaderDevice *>(g_pShaderDevice);
+		return static_cast<IShaderDevice *>(g_pShaderAPI);
 	}
 	if (Q_stricmp(pInterfaceName, SHADERAPI_INTERFACE_VERSION) == 0) {
 		return static_cast<IShaderAPI *>(g_pShaderAPI);

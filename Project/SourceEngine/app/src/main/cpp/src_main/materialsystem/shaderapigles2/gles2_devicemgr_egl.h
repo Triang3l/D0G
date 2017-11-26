@@ -18,6 +18,15 @@ class CShaderDeviceMgrEGL : public CShaderDeviceMgrBase {
 public:
 	CShaderDeviceMgrEGL();
 
+	virtual UpdateGLESContextResult_t UpdateGLESContext(const ShaderDeviceInfo_t &info);
+	virtual bool UpdateGLESSurface(void *hWnd, int width, int height);
+	virtual bool ResizeCurrentGLESSurface(int width, int height);
+	virtual bool IsGLESContextActive() const;
+
+	virtual int StencilBufferBits() const;
+	virtual bool IsAAEnabled() const;
+	virtual void Present();
+
 protected:
 	virtual bool InitWindowSystemInterface();
 	virtual void ShutdownWindowSystemInterface();
@@ -31,9 +40,6 @@ protected:
 	virtual bool CreateInitGLESContext();
 	virtual void DestroyInitGLESContext();
 
-	virtual UpdateGLESContextResult_t UpdateGLESContext(const ShaderDeviceInfo_t &info);
-	virtual bool UpdateGLESSurface(void *hWnd, unsigned int width, unsigned int height);
-
 private:
 	EGLConfig RequestEGLConfig(int colorSize, int depthSize, int depthEncoding, int stencilSize, int minSwapInterval);
 
@@ -46,12 +52,18 @@ private:
 	EGLConfig m_EGLConfig;
 	int m_EGLConfigID;
 	int m_EGLConfigNativeVisualID;
+	int m_EGLConfigStencilSize;
+	int m_EGLConfigSamples;
 	bool m_EGLConfigRequest_UseStencil;
 	bool m_EGLConfigRequest_WaitForVSync;
 
 	EGLContext m_EGLContext;
 	EGLSurface m_EGLPbuffer;
+
+	EGLNativeWindowType m_EGLSurfaceWindow;
 	EGLSurface m_EGLSurface;
+
+	bool m_EGLContextActive;
 
 	void *m_GLES2Library;
 };
