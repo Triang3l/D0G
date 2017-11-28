@@ -4,8 +4,17 @@
 #ifndef SHADERAPI_GLES2_API_H
 #define SHADERAPI_GLES2_API_H
 
+#include "gles2_colorformat.h"
 #include "shaderapi/ishaderapi.h"
 #include "shaderapi/IShaderDevice.h"
+#include "tier1/utllinkedlist.h"
+#include "tier1/utlvector.h"
+
+struct Texture_t {
+	unsigned int m_GLTexture;
+	int m_WrapU, m_WrapV, m_WrapW;
+	int m_MagFilter, m_MinFilter;
+};
 
 class CShaderAPIGLES2 : public IShaderDevice, public IShaderAPI {
 public:
@@ -55,10 +64,26 @@ public:
 
 	virtual bool SetMode(void *hWnd, int nAdapter, const ShaderDeviceInfo_t &info);
 
+	// virtual ImageFormat GetNearestSupportedFormat(ImageFormat fmt) const;
+
+	virtual bool DoRenderTargetsNeedSeparateDepthBuffer() const;
+
+	virtual ShaderAPITextureHandle_t CreateTexture(int width, int height, int depth,
+			ImageFormat dstImageFormat, int numMipLevels, int numCopies, int flags,
+			const char *pDebugName, const char *pTextureGroupName);
+
+	virtual void CreateTextures(ShaderAPITextureHandle_t *pHandles, int count, int width, int height, int depth,
+			ImageFormat dstImageFormat, int numMipLevels, int numCopies, int flags,
+			const char *pDebugName, const char *pTextureGroupName);
+
 	// Internal methods.
 
 	void OnGLESContextInit(bool restore);
 	void OnGLESContextShutdown();
+
+	GLESColorFormat_t ImageFormatToGLESFormat(ImageFormat format) const; // Returns format | (type << 16).
+
+	void CreateTextureHandles(ShaderAPITextureHandle_t *handles, int count);
 
 private:
 	int m_BackBufferWidth, m_BackBufferHeight;
@@ -69,6 +94,8 @@ private:
 	float m_ClearDepth;
 	int m_ClearStencil;
 
+	CUtlFixedLinkedList<Texture_t> m_Textures;
+	CUtlVector<ShaderAPITextureHandle_t> m_TexturesDeleted;
 	ShaderAPITextureHandle_t m_TexturesBound[MAX_SAMPLERS];
 	Sampler_t m_TextureActive;
 };

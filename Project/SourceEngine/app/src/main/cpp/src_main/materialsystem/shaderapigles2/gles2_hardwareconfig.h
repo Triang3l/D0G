@@ -12,7 +12,17 @@ struct HardwareCaps_t : public MaterialAdapterInfo_t {
 	int m_MaxAnisotropy;
 	int m_MaxTextureSize;
 
+	bool m_Ext_BGRA : 1;
+	bool m_Ext_ColorBufferHalfFloat : 1;
+	bool m_Ext_Depth24 : 1;
+	bool m_Ext_PackedDepthStencil : 1;
+	bool m_Ext_TextureCompressionS3TC : 1;
 	bool m_Ext_TextureFilterAnisotropic : 1;
+	bool m_Ext_TextureFloat : 1;
+	bool m_Ext_TextureFloatLinear : 1; // Implies TextureFloat.
+	bool m_Ext_TextureFormatBGRA8888 : 1;
+	bool m_Ext_TextureHalfFloat : 1;
+	bool m_Ext_TextureHalfFloatLinear : 1; // Implies TextureHalfFloat.
 	bool m_Ext_TextureNPOT : 1;
 };
 
@@ -33,20 +43,20 @@ public:
 	// virtual bool SupportsCompressedTextures() const;
 	// virtual VertexCompressionType_t SupportsCompressedVertices() const;
 	// virtual bool SupportsNormalMapCompression() const;
-	virtual bool SupportsBorderColor() const { return false; }
-	virtual bool SupportsFetch4() const { return m_Caps.m_GLESVersion >= 310; }
-	virtual bool SupportsVertexAndPixelShaders() const { return true; }
-	virtual bool SupportsPixelShaders_1_4() const { return true; }
-	virtual bool SupportsPixelShaders_2_0() const { return true; }
-	virtual bool SupportsVertexShaders_2_0() const { return true; }
-	virtual int  MaximumAnisotropicLevel() const { return m_Caps.m_MaxAnisotropy; }
-	virtual int  MaxTextureWidth() const { return m_Caps.m_MaxTextureSize; }
-	virtual int  MaxTextureHeight() const { return m_Caps.m_MaxTextureSize; }
+	virtual bool SupportsBorderColor() const;
+	virtual bool SupportsFetch4() const;
+	virtual bool SupportsVertexAndPixelShaders() const;
+	virtual bool SupportsPixelShaders_1_4() const;
+	virtual bool SupportsPixelShaders_2_0() const;
+	virtual bool SupportsVertexShaders_2_0() const;
+	virtual int  MaximumAnisotropicLevel() const;
+	virtual int  MaxTextureWidth() const;
+	virtual int  MaxTextureHeight() const;
 	// virtual int	 TextureMemorySize() const;
 	// virtual bool SupportsOverbright() const;
-	virtual bool SupportsCubeMaps() const { return true; }
-	virtual bool SupportsMipmappedCubemaps() const { return true; }
-	virtual bool SupportsNonPow2Textures() const { return m_Caps.m_Ext_TextureNPOT; }
+	virtual bool SupportsCubeMaps() const;
+	virtual bool SupportsMipmappedCubemaps() const;
+	virtual bool SupportsNonPow2Textures() const;
 	// virtual int  GetTextureStageCount() const;
 	// virtual int	 NumVertexShaderConstants() const;
 	// virtual int	 NumBooleanVertexShaderConstants() const;
@@ -60,13 +70,13 @@ public:
 	// virtual int	 MaxBlendMatrixIndices() const;
 	// virtual int  MaxTextureAspectRatio() const;
 	// virtual int	 MaxVertexShaderBlendMatrices() const;
-	virtual int	 MaxUserClipPlanes() const { return 0; }
+	virtual int	 MaxUserClipPlanes() const;
 	// virtual bool UseFastClipping() const;
 	virtual int  GetDXSupportLevel() const;
 	// virtual const char *GetShaderDLLName() const;
 	// virtual bool ReadPixelsFromFrontBuffer() const;
 	// virtual bool PreferDynamicTextures() const;
-	// virtual bool SupportsHDR() const;
+	virtual bool SupportsHDR() const;
 	// virtual bool HasProjectedBumpEnv() const;
 	// virtual bool SupportsSpheremapping() const;
 	// virtual bool NeedsAAClamp() const;
@@ -82,29 +92,27 @@ public:
 	// virtual int  GetMaxVertexTextureDimension() const;
 	// virtual int  MaxTextureDepth() const;
 	// virtual HDRType_t GetHDRType() const;
-	// virtual HDRType_t GetHardwareHDRType() const;
+	virtual HDRType_t GetHardwareHDRType() const;
 	// virtual bool SupportsPixelShaders_2_b() const;
 	// virtual bool SupportsShaderModel_3_0() const;
 	// virtual bool SupportsStreamOffset() const;
-	// virtual int  StencilBufferBits() const;
-	// virtual int  MaxViewports() const;
+	virtual int  StencilBufferBits() const;
+	virtual int  MaxViewports() const;
 	// virtual void OverrideStreamOffsetSupport( bool bOverrideEnabled, bool bEnableSupport );
 	// virtual int  GetShadowFilterMode() const;
 	// virtual int NeedsShaderSRGBConversion() const;
 	// virtual bool UsesSRGBCorrectBlending() const;
 	// virtual bool HasFastVertexTextures() const;
 	// virtual int MaxHWMorphBatchCount() const;
-
-	// const char *GetHWSpecificShaderDLLName() const;
-	// int GetActualSamplerCount() const;
-	// int GetActualTextureStageCount() const;
-	bool SupportsMipmapping() const { return true; }
 	// virtual bool ActuallySupportsPixelShaders_2_b() const;
+	virtual bool SupportsHDRMode(HDRType_t nHDRMode) const;
 
-	// virtual bool SupportsHDRMode( HDRType_t nHDRMode ) const;
+	// virtual bool GetHDREnabled() const { return m_bHDREnabled; }
+	// virtual void SetHDREnabled(bool bEnable) { m_bHDREnabled = bEnable; }
 
-	// virtual bool GetHDREnabled( void ) const { return m_bHDREnabled; }
-	// virtual void SetHDREnabled( bool bEnable ) { m_bHDREnabled = bEnable; }
+	// Internal methods.
+
+	static bool CheckGLExtension(const char *extensionString, const char *extensionName);
 
 private:
 	HardwareCaps_t m_Caps;

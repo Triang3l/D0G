@@ -6,10 +6,53 @@
 
 #include <GLES2/gl2.h>
 
+#ifndef GL_EXT_bgra
+#define GL_EXT_bgra 1
+#define GL_BGR_EXT                                              0x80E0
+#define GL_BGRA_EXT                                             0x80E1
+#endif
+
+#ifndef GL_OES_depth24
+#define GL_OES_depth24 1
+#define GL_DEPTH_COMPONENT24_OES                                0x81A6
+#endif
+
+#ifndef GL_OES_packed_depth_stencil
+#define GL_OES_packed_depth_stencil 1
+#define GL_DEPTH_STENCIL_OES                                    0x84F9
+#define GL_UNSIGNED_INT_24_8_OES                                0x84FA
+#define GL_DEPTH24_STENCIL8_OES                                 0x88F0
+#endif
+
+#ifndef GL_EXT_texture_compression_s3tc
+#define GL_EXT_texture_compression_s3tc 1
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT                         0x83F0
+#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT                        0x83F1
+#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT                        0x83F2
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT                        0x83F3
+#endif
+
 #ifndef GL_EXT_texture_filter_anisotropic
 #define GL_EXT_texture_filter_anisotropic 1
-#define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
-#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+#define GL_TEXTURE_MAX_ANISOTROPY_EXT                           0x84FE
+#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT                       0x84FF
+#endif
+
+#if !defined(GL_OES_texture_half_float) && !defined(GL_OES_vertex_half_float)
+#define GL_OES_texture_half_float 1
+#define GL_OES_vertex_half_float 1
+#define GL_HALF_FLOAT_OES                                       0x8D61
+#endif
+
+#ifndef GL_ES_VERSION_3_0
+#define GL_RED                                           0x1903
+#define GL_RGBA32F                                       0x8814
+#define GL_RGBA16F                                       0x881A
+#define GL_HALF_FLOAT                                    0x140B
+#define GL_RG                                            0x8227
+#define GL_R32F                                          0x822E
+#define GL_RG8_SNORM                                     0x8F95
+#define GL_RGBA8_SNORM                                   0x8F97
 #endif
 
 struct GLES2Funcs_t {

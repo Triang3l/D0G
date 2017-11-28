@@ -3,6 +3,7 @@
 
 #include "gles2_devicemgr_egl.h"
 #include "gles2_api.h"
+#include "gles2_hardwareconfig.h"
 #include "tier0/dbg.h"
 #include <string.h>
 #ifdef __ANDROID__
@@ -40,7 +41,7 @@ bool CShaderDeviceMgrEGL::InitWindowSystemInterface() {
 	}
 
 	const char *extensions = eglQueryString(m_EGLDisplay, EGL_EXTENSIONS);
-	m_EGLExt_DepthNonlinear = (strstr(extensions, "EGL_NV_depth_nonlinear") != NULL);
+	m_EGLExt_DepthNonlinear = CHardwareConfig::CheckGLExtension(extensions, "EGL_NV_depth_nonlinear");
 
 	return true;
 }

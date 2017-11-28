@@ -11,6 +11,7 @@
 
 IShaderBuffer *CShaderAPIGLES2::CompileShader(const char *pProgram, size_t nBufLen, const char *pShaderVersion) {
 	AssertMsg(0, "Can't compile Direct3D shaders with an OpenGL ES ShaderAPI.");
+	return NULL;
 }
 
 VertexShaderHandle_t CShaderAPIGLES2::CreateVertexShader(IShaderBuffer *pShaderBuffer) {

@@ -61,3 +61,7 @@ int CShaderAPIGLES2::GetViewports(ShaderViewport_t *pViewports, int nMax) const 
 	}
 	return 1;
 }
+
+bool CShaderAPIGLES2::DoRenderTargetsNeedSeparateDepthBuffer() const {
+	return true;
+}
