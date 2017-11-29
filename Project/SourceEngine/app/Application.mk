@@ -1,6 +1,7 @@
 APP_CFLAGS := \
   -ffast-math \
   -D_LINUX=1 \
+  -DSHADERAPI_GLES2=1 \
   -Wno-deprecated-register \
   -Wno-invalid-offsetof \
   -Wno-switch \
