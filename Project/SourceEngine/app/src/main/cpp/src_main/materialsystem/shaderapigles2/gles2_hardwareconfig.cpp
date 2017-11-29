@@ -5,6 +5,7 @@
 #include "gles2_devicemgr.h"
 #include "gles2_glfuncs.h"
 #include "materialsystem/imaterialsystem.h"
+#include "materialsystem/IShader.h"
 #include "tier1/strtools.h"
 #include <stdio.h>
 #include <string.h>
@@ -60,7 +61,10 @@ void CHardwareConfig::SetupHardwareCaps() {
 	if (m_Caps.m_GLESVersion >= 300) {
 		m_Caps.m_Ext_ColorBufferHalfFloat = true;
 		m_Caps.m_Ext_Depth24 = true;
+		m_Caps.m_Ext_DepthTexture = true;
+		m_Caps.m_Ext_FragmentPrecisionHigh = true;
 		m_Caps.m_Ext_PackedDepthStencil = true;
+		m_Caps.m_Ext_ShadowSamplers = true;
 		m_Caps.m_Ext_TextureFloat = true;
 		m_Caps.m_Ext_TextureFloatLinear = true;
 		m_Caps.m_Ext_TextureHalfFloat = true;
@@ -68,28 +72,69 @@ void CHardwareConfig::SetupHardwareCaps() {
 		m_Caps.m_Ext_TextureNPOT = true;
 	} else {
 		m_Caps.m_Ext_ColorBufferHalfFloat = CheckGLExtension(glesExtensions, "GL_EXT_color_buffer_half_float");
+		int fragmentHighFloatRange[2], fragmentHighFloatPrecision = 0;
+		g_pGL->GetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, fragmentHighFloatRange, &fragmentHighFloatPrecision);
+		m_Caps.m_Ext_FragmentPrecisionHigh = (fragmentHighFloatPrecision > 0);
 		m_Caps.m_Ext_Depth24 = CheckGLExtension(glesExtensions, "GL_OES_depth24");
+		m_Caps.m_Ext_DepthTexture = CheckGLExtension(glesExtensions, "GL_OES_depth_texture");
 		m_Caps.m_Ext_PackedDepthStencil = CheckGLExtension(glesExtensions, "GL_OES_packed_depth_stencil");
 		m_Caps.m_Ext_TextureFloat = CheckGLExtension(glesExtensions, "GL_OES_texture_float");
-		m_Caps.m_Ext_TextureFloatLinear = m_Caps.m_Ext_TextureFloat &&
-				CheckGLExtension(glesExtensions, "GL_OES_texture_float_linear");
 		m_Caps.m_Ext_TextureHalfFloat = CheckGLExtension(glesExtensions, "GL_OES_texture_half_float");
+		m_Caps.m_Ext_TextureNPOT = CheckGLExtension(glesExtensions, "GL_OES_texture_npot");
+		// Dependencies.
 		m_Caps.m_Ext_TextureHalfFloatLinear = m_Caps.m_Ext_TextureHalfFloat &&
 				CheckGLExtension(glesExtensions, "GL_OES_texture_half_float_linear");
-		m_Caps.m_Ext_TextureNPOT = CheckGLExtension(glesExtensions, "GL_OES_texture_npot");
+		m_Caps.m_Ext_ShadowSamplers = m_Caps.m_Ext_DepthTexture &&
+				CheckGLExtension(glesExtensions, "GL_EXT_shadow_samplers");
 	}
 	m_Caps.m_Ext_BGRA = CheckGLExtension(glesExtensions, "GL_EXT_bgra");
+	m_Caps.m_Ext_DepthNonlinear = CheckGLExtension(glesExtensions, "GL_NV_depth_nonlinear");
 	m_Caps.m_Ext_TextureCompressionS3TC = CheckGLExtension(glesExtensions, "GL_EXT_texture_compression_s3tc") ||
 			CheckGLExtension(glesExtensions, "GL_NV_texture_compression_s3tc");
 	m_Caps.m_Ext_TextureFormatBGRA8888 = CheckGLExtension(glesExtensions, "GL_EXT_texture_format_BGRA8888");
 	m_Caps.m_Ext_TextureFilterAnisotropic = CheckGLExtension(glesExtensions, "GL_EXT_texture_filter_anisotropic");
 
 	// Maximum values.
+
+	if (m_Caps.m_GLESVersion >= 300) {
+		m_Caps.m_MaxTextureSize = 2048;
+		m_Caps.m_NumVertexShaderConstants = 256;
+		m_Caps.m_NumPixelShaderConstants = 224;
+	} else {
+		m_Caps.m_MaxTextureSize = 64;
+		m_Caps.m_NumVertexShaderConstants = 128;
+		m_Caps.m_NumPixelShaderConstants = 16;
+	}
+	g_pGL->GetIntegerv(GL_MAX_TEXTURE_SIZE, &m_Caps.m_MaxTextureSize);
+	g_pGL->GetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &m_Caps.m_NumVertexShaderConstants);
+	g_pGL->GetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &m_Caps.m_NumPixelShaderConstants);
 	m_Caps.m_MaxAnisotropy = 1;
 	if (m_Caps.m_Ext_TextureFilterAnisotropic) {
 		g_pGL->GetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &m_Caps.m_MaxAnisotropy);
 	}
-	g_pGL->GetIntegerv(GL_MAX_TEXTURE_SIZE, &m_Caps.m_MaxTextureSize);
+
+	if (m_Caps.m_NumVertexShaderConstants >= VERTEX_SHADER_MODEL + 3 * NUM_MODEL_TRANSFORMS) {
+		// The smallest in the near-GLES3 (256) zone is 251 on Adreno 2xx.
+		m_Caps.m_MaxVertexShaderBlendMatrices = NUM_MODEL_TRANSFORMS;
+	} else {
+		m_Caps.m_MaxVertexShaderBlendMatrices = 16;
+	}
+}
+
+bool CHardwareConfig::HasStencilBuffer() const {
+	return StencilBufferBits() > 0;
+}
+
+int	CHardwareConfig::GetFrameBufferColorDepth() const {
+	return 4;
+}
+
+bool CHardwareConfig::HasSetDeviceGammaRamp() const {
+	return false;
+}
+
+bool CHardwareConfig::SupportsCompressedTextures() const {
+	return m_Caps.m_Ext_TextureCompressionS3TC;
 }
 
 bool CHardwareConfig::SupportsBorderColor() const {
@@ -128,7 +173,7 @@ int CHardwareConfig::MaxTextureHeight() const {
 	return m_Caps.m_MaxTextureSize;
 }
 
-int	TextureMemorySize() const {
+int	CHardwareConfig::TextureMemorySize() const {
 	return 102236160; // 97.5 MB. No EGL/GL way of retrieval, and on Android memory is shared anyway.
 }
 
@@ -144,12 +189,64 @@ bool CHardwareConfig::SupportsNonPow2Textures() const {
 	return m_Caps.m_Ext_TextureNPOT;
 }
 
+int CHardwareConfig::GetTextureStageCount() const {
+	return 0;
+}
+
+int	CHardwareConfig::NumVertexShaderConstants() const {
+	return m_Caps.m_NumVertexShaderConstants;
+}
+
+int	CHardwareConfig::NumBooleanVertexShaderConstants() const {
+	return NumVertexShaderConstants();
+}
+
+int	CHardwareConfig::NumIntegerVertexShaderConstants() const {
+	return NumVertexShaderConstants();
+}
+
+int	CHardwareConfig::NumPixelShaderConstants() const {
+	return m_Caps.m_NumPixelShaderConstants;
+}
+
+int	CHardwareConfig::NumBooleanPixelShaderConstants() const {
+	return NumPixelShaderConstants();
+}
+
+int	CHardwareConfig::NumIntegerPixelShaderConstants() const {
+	return NumPixelShaderConstants();
+}
+
+int	CHardwareConfig::MaxBlendMatrices() const {
+	return 0;
+}
+
+int CHardwareConfig::MaxBlendMatrixIndices() const {
+	return 0;
+}
+
+int CHardwareConfig::MaxTextureAspectRatio() const {
+	return m_Caps.m_MaxTextureSize;
+}
+
+int	CHardwareConfig::MaxVertexShaderBlendMatrices() const {
+	return m_Caps.m_MaxVertexShaderBlendMatrices;
+}
+
 int	CHardwareConfig::MaxUserClipPlanes() const {
 	return 0;
 }
 
+bool CHardwareConfig::UseFastClipping() const {
+	return true;
+}
+
 int CHardwareConfig::GetDXSupportLevel() const {
 	return m_Caps.m_nMaxDXSupportLevel;
+}
+
+bool CHardwareConfig::PreferDynamicTextures() const {
+	return true;
 }
 
 bool CHardwareConfig::SupportsHDR() const {
@@ -163,6 +260,13 @@ HDRType_t CHardwareConfig::GetHardwareHDRType() const {
 	}
 	// No 16-bit normalized format on GLES.
 	return HDR_TYPE_NONE;
+}
+
+bool CHardwareConfig::SupportsStreamOffset() const {
+	return true;
+}
+
+void CHardwareConfig::OverrideStreamOffsetSupport(bool bOverrideEnabled, bool bEnableSupport) {
 }
 
 int CHardwareConfig::StencilBufferBits() const {

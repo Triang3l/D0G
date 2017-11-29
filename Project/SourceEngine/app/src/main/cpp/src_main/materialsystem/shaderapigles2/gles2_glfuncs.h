@@ -17,11 +17,24 @@
 #define GL_DEPTH_COMPONENT24_OES                                0x81A6
 #endif
 
+#ifndef GL_NV_depth_nonlinear
+#define GL_NV_depth_nonlinear 1
+#define GL_DEPTH_COMPONENT16_NONLINEAR_NV                       0x8E2C
+#endif
+
 #ifndef GL_OES_packed_depth_stencil
 #define GL_OES_packed_depth_stencil 1
 #define GL_DEPTH_STENCIL_OES                                    0x84F9
 #define GL_UNSIGNED_INT_24_8_OES                                0x84FA
 #define GL_DEPTH24_STENCIL8_OES                                 0x88F0
+#endif
+
+#ifndef GL_EXT_shadow_samplers
+#define GL_EXT_shadow_samplers 1
+#define GL_TEXTURE_COMPARE_MODE_EXT                             0x884C
+#define GL_TEXTURE_COMPARE_FUNC_EXT                             0x884D
+#define GL_COMPARE_REF_TO_TEXTURE_EXT                           0x884E
+#define GL_SAMPLER_2D_SHADOW_EXT                                0x8B62
 #endif
 
 #ifndef GL_EXT_texture_compression_s3tc

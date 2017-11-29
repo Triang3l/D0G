@@ -11,11 +11,19 @@ struct HardwareCaps_t : public MaterialAdapterInfo_t {
 
 	int m_MaxAnisotropy;
 	int m_MaxTextureSize;
+	int m_NumVertexShaderConstants;
+	int m_NumPixelShaderConstants;
+
+	int m_MaxBlendMatrices;
 
 	bool m_Ext_BGRA : 1;
 	bool m_Ext_ColorBufferHalfFloat : 1;
 	bool m_Ext_Depth24 : 1;
+	bool m_Ext_DepthNonlinear : 1;
+	bool m_Ext_DepthTexture : 1;
+	bool m_Ext_FragmentPrecisionHigh : 1;
 	bool m_Ext_PackedDepthStencil : 1;
+	bool m_Ext_ShadowSamplers : 1;
 	bool m_Ext_TextureCompressionS3TC : 1;
 	bool m_Ext_TextureFilterAnisotropic : 1;
 	bool m_Ext_TextureFloat : 1;
@@ -36,11 +44,11 @@ public:
 	HardwareCaps_t &CapsForEdit() { return m_Caps; }
 
 	// virtual bool HasDestAlphaBuffer() const;
-	// virtual bool HasStencilBuffer() const;
-	// virtual int	 GetFrameBufferColorDepth() const;
+	virtual bool HasStencilBuffer() const;
+	virtual int	 GetFrameBufferColorDepth() const;
 	// virtual int  GetSamplerCount() const;
-	// virtual bool HasSetDeviceGammaRamp() const;
-	// virtual bool SupportsCompressedTextures() const;
+	virtual bool HasSetDeviceGammaRamp() const;
+	virtual bool SupportsCompressedTextures() const;
 	// virtual VertexCompressionType_t SupportsCompressedVertices() const;
 	// virtual bool SupportsNormalMapCompression() const;
 	virtual bool SupportsBorderColor() const;
@@ -52,30 +60,30 @@ public:
 	virtual int  MaximumAnisotropicLevel() const;
 	virtual int  MaxTextureWidth() const;
 	virtual int  MaxTextureHeight() const;
-	// virtual int	 TextureMemorySize() const;
+	virtual int	 TextureMemorySize() const;
 	// virtual bool SupportsOverbright() const;
 	virtual bool SupportsCubeMaps() const;
 	virtual bool SupportsMipmappedCubemaps() const;
 	virtual bool SupportsNonPow2Textures() const;
-	// virtual int  GetTextureStageCount() const;
-	// virtual int	 NumVertexShaderConstants() const;
-	// virtual int	 NumBooleanVertexShaderConstants() const;
-	// virtual int	 NumIntegerVertexShaderConstants() const;
-	// virtual int	 NumPixelShaderConstants() const;
-	// virtual int	 NumBooleanPixelShaderConstants() const;
-	// virtual int	 NumIntegerPixelShaderConstants() const;
+	virtual int  GetTextureStageCount() const;
+	virtual int	 NumVertexShaderConstants() const;
+	virtual int	 NumBooleanVertexShaderConstants() const;
+	virtual int	 NumIntegerVertexShaderConstants() const;
+	virtual int	 NumPixelShaderConstants() const;
+	virtual int	 NumBooleanPixelShaderConstants() const;
+	virtual int	 NumIntegerPixelShaderConstants() const;
 	// virtual int	 MaxNumLights() const;
 	// virtual bool SupportsHardwareLighting() const;
-	// virtual int	 MaxBlendMatrices() const;
-	// virtual int	 MaxBlendMatrixIndices() const;
-	// virtual int  MaxTextureAspectRatio() const;
-	// virtual int	 MaxVertexShaderBlendMatrices() const;
+	virtual int	 MaxBlendMatrices() const;
+	virtual int	 MaxBlendMatrixIndices() const;
+	virtual int  MaxTextureAspectRatio() const;
+	virtual int	 MaxVertexShaderBlendMatrices() const;
 	virtual int	 MaxUserClipPlanes() const;
-	// virtual bool UseFastClipping() const;
+	virtual bool UseFastClipping() const;
 	virtual int  GetDXSupportLevel() const;
 	// virtual const char *GetShaderDLLName() const;
 	// virtual bool ReadPixelsFromFrontBuffer() const;
-	// virtual bool PreferDynamicTextures() const;
+	virtual bool PreferDynamicTextures() const;
 	virtual bool SupportsHDR() const;
 	// virtual bool HasProjectedBumpEnv() const;
 	// virtual bool SupportsSpheremapping() const;
@@ -95,10 +103,10 @@ public:
 	virtual HDRType_t GetHardwareHDRType() const;
 	// virtual bool SupportsPixelShaders_2_b() const;
 	// virtual bool SupportsShaderModel_3_0() const;
-	// virtual bool SupportsStreamOffset() const;
+	virtual bool SupportsStreamOffset() const;
 	virtual int  StencilBufferBits() const;
 	virtual int  MaxViewports() const;
-	// virtual void OverrideStreamOffsetSupport( bool bOverrideEnabled, bool bEnableSupport );
+	virtual void OverrideStreamOffsetSupport(bool bOverrideEnabled, bool bEnableSupport);
 	// virtual int  GetShadowFilterMode() const;
 	// virtual int NeedsShaderSRGBConversion() const;
 	// virtual bool UsesSRGBCorrectBlending() const;
