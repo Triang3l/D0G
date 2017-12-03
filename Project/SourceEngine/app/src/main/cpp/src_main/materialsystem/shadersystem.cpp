@@ -104,6 +104,9 @@ private:
 		// override any existing shader names.
 		bool m_bModShaderDLL;
 		CUtlDict< IShader *, unsigned short >	m_ShaderDict; 
+#ifdef SHADERAPI_GLES2
+		CUtlDict< IShaderSourceProvider *, unsigned short > m_ShaderSourceProviderDicts[SHADER_STAGE_COUNT];
+#endif
 	};
 
 private:
@@ -683,6 +686,47 @@ void CShaderSystem::SetupShaderDictionary( int nShaderDLLIndex )
 
 		info.m_ShaderDict.Insert( pShaderName, pShader );
 	}
+
+#ifdef SHADERAPI_GLES2
+	for ( int stage = 0; stage < SHADER_STAGE_COUNT; ++stage )
+	{
+		nCount = info.m_pShaderDLL->ShaderSourceProviderCount( (IShaderSourceProvider::ShaderStage_t)stage );
+		CUtlDict< IShaderSourceProvider *, unsigned short > &providerDict = info.m_ShaderSourceProviderDicts[stage];
+		for ( i = 0; i < nCount; ++i )
+		{
+			IShaderSourceProvider *pProvider = info.m_pShaderDLL->GetShaderSourceProvider( stage, i );
+			const char *pProviderName = pProvider->GetName();
+			if ( info.m_bModShaderDLL )
+			{
+				for ( int iTestDLL = 0; iTestDLL < m_ShaderDLLs.Count(); ++iTestDLL )
+				{
+					ShaderDLLInfo_t *pTestDLL = &m_ShaderDLLs[iTestDLL];
+					if ( !pTestDLL->m_bModShaderDLL )
+					{
+						if ( pTestDLL->m_ShaderSourceProviderDicts[stage].Find( pShaderName ) !=
+								pTestDLL->m_ShaderSourceProviderDicts[stage].InvalidIndex() )
+						{
+							const char *stageName;
+							switch ( stage )
+							{
+							case IShaderSourceProvider::SHADER_STAGE_VERTEX:
+								stageName = "vertex shader";
+								break;
+							case IShaderSourceProvider::SHADER_STAGE_PIXEL:
+								stageName = "pixel shader";
+								break;
+							default:
+								stageName = "shader";
+							}
+							Error( "Game shader DLL '%s' trying to override a base %s provider '%s'.", info.m_pFileName, stageName, pProviderName );
+						}
+					}
+				}
+			}
+			providerDict.Insert( pProviderName, pProvider );
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -758,6 +802,28 @@ int CShaderSystem::GetShaders( int nFirstShader, int nMaxCount, IShader **ppShad
 
 	return nCount;
 }
+
+#ifdef SHADERAPI_GLES2
+//-----------------------------------------------------------------------------
+// Finds a shader in the shader dictionary
+//-----------------------------------------------------------------------------
+IShaderSourceProvider *CShaderSystem::FindShaderSourceProvider( IShaderSourceProvider::ShaderStage_t stage, const char *pProviderName )
+{
+	// FIXME: What kind of search order should we use here?
+	// I'm currently assuming last added, first searched.
+	for (int i = m_ShaderDLLs.Count(); --i >= 0; )
+	{
+		CUtlDict< IShaderSourceProvider *, unsigned short > &providerDict = m_ShaderDLLs[i].m_ShaderSourceProviderDicts[stage];
+		unsigned short idx = providerDict.Find( pShaderName );
+		if ( idx != providerDict.InvalidIndex() )
+		{
+			return providerDict[idx];
+		}
+	}
+
+	return NULL;
+}
+#endif
 
 	
 //-----------------------------------------------------------------------------
