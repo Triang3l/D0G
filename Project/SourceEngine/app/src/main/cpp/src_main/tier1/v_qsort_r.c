@@ -76,9 +76,9 @@ swapfunc(a, b, n, swaptype)
 static inline char *
 med3(char *a, char *b, char *c, cmp_t *cmp, void *thunk)
 {
-	return cmp(thunk, a, b) < 0 ?
-	       (cmp(thunk, b, c) < 0 ? b : (cmp(thunk, a, c) < 0 ? c : a ))
-              :(cmp(thunk, b, c) > 0 ? b : (cmp(thunk, a, c) < 0 ? a : c ));
+	return cmp(a, b, thunk) < 0 ?
+	       (cmp(b, c, thunk) < 0 ? b : (cmp(a, c, thunk) < 0 ? c : a ))
+              :(cmp(b, c, thunk) > 0 ? b : (cmp(a, c, thunk) < 0 ? a : c ));
 }
 
 void
@@ -94,7 +94,7 @@ loop:	SWAPINIT(a, es);
 	if (n < 7) {
 		for (pm = (char *)a + es; pm < (char *)a + n * es; pm += es)
 			for (pl = pm; 
-			     pl > (char *)a && cmp(thunk, pl - es, pl) > 0;
+			     pl > (char *)a && cmp(pl - es, pl, thunk) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
 		return;
@@ -116,7 +116,7 @@ loop:	SWAPINIT(a, es);
 
 	pc = pd = (char *)a + (n - 1) * es;
 	for (;;) {
-		while (pb <= pc && (cmp_result = cmp(thunk, pb, a)) <= 0) {
+		while (pb <= pc && (cmp_result = cmp(pb, a, thunk)) <= 0) {
 			if (cmp_result == 0) {
 				swap_cnt = 1;
 				swap(pa, pb);
@@ -124,7 +124,7 @@ loop:	SWAPINIT(a, es);
 			}
 			pb += es;
 		}
-		while (pb <= pc && (cmp_result = cmp(thunk, pc, a)) >= 0) {
+		while (pb <= pc && (cmp_result = cmp(pc, a, thunk)) >= 0) {
 			if (cmp_result == 0) {
 				swap_cnt = 1;
 				swap(pc, pd);
@@ -142,7 +142,7 @@ loop:	SWAPINIT(a, es);
 	if (swap_cnt == 0) {  /* Switch to insertion sort */
 		for (pm = (char *)a + es; pm < (char *)a + n * es; pm += es)
 			for (pl = pm; 
-			     pl > (char *)a && cmp(thunk, pl - es, pl) > 0;
+			     pl > (char *)a && cmp(pl - es, pl, thunk) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
 		return;
