@@ -55,8 +55,14 @@ bool CShaderDeviceMgrBase::Connect(CreateInterfaceFn factory) {
 	ConnectTier1Libraries(&actualFactory, 1);
 	InitShaderAPICVars();
 	ConnectTier3Libraries(&actualFactory, 1);
+	g_pShaderUtil = (IShaderUtil *) ShaderDeviceFactory(SHADER_UTIL_INTERFACE_VERSION, NULL);
 	g_pShaderDeviceMgr = this;
 	s_TempFactory = NULL;
+
+	if (g_pShaderUtil == NULL) {
+		Warning("ShaderAPIGLES2 was unable to access IShaderUtil!\n");
+		return false;
+	}
 
 	MathLib_Init(2.2f, 2.2f, 0.0f, 2.0f);
 	return true;
@@ -64,6 +70,7 @@ bool CShaderDeviceMgrBase::Connect(CreateInterfaceFn factory) {
 
 void CShaderDeviceMgrBase::Disconnect() {
 	g_pShaderDeviceMgr = NULL;
+	g_pShaderUtil = NULL;
 	DisconnectTier2Libraries();
 	ConVar_Unregister();
 	DisconnectTier1Libraries();
@@ -94,8 +101,13 @@ InitReturnVal_t CShaderDeviceMgrBase::Init() {
 		return INIT_FAILED;
 	}
 	g_pHardwareConfig->SetupHardwareCaps();
-	InitGLES2ExtensionsAndGLES3Core();
+	bool gles3Loaded = InitGLES2ExtensionsAndGLES3Core();
 	DestroyInitGLESContext();
+	if (!gles3Loaded) {
+		ShutdownGLES2Library();
+		ShutdownWindowSystemInterface();
+		return INIT_FAILED;
+	}
 
 	return INIT_OK;
 }
@@ -250,9 +262,52 @@ bool CShaderDeviceMgrBase::InitGLES2CoreFunctions() {
 	LOAD_GLES2_CORE(VertexAttribPointer)
 	LOAD_GLES2_CORE(Viewport)
 	return true;
+#undef LOAD_GLES2_CORE
 }
 
 void CShaderDeviceMgrBase::InitGLES2ExtensionsAndGLES3Core() {
+#define LOAD_GLES2_EXTENSION(function, suffix) \
+	*((void **) (&(g_pGL->##function))) = GetGLES2ExtensionFunction("gl"#function#suffix); \
+	if (g_pGL->##function == NULL) { \
+		Warning("ERROR: %s not found by WSI GetProcAddress.\n", "gl"#function#suffix); \
+		extensionLoaded = false; \
+	}
+#define LOAD_GLES3_CORE(function) \
+	*((void **) (&(g_pGL->##function))) = GetGLES3CoreFunction("gl"#function); \
+	if (g_pGL->##function == NULL) { \
+		Warning("ERROR: %s not found in libGLESv3.\n", "gl"#function); \
+		return false; \
+	}
+
+	HardwareCaps_t &caps = g_pHardwareConfig->CapsForEdit();
+
+	if (caps.m_GLESVersion >= 300) {
+		LOAD_GLES3_CORE(CompressedTexImage3D)
+		LOAD_GLES3_CORE(CompressedTexSubImage3D)
+		LOAD_GLES3_CORE(CopyTexSubImage3D)
+		LOAD_GLES3_CORE(FramebufferTexture3D)
+		LOAD_GLES3_CORE(TexImage3D)
+		LOAD_GLES3_CORE(TexSubImage3D)
+	} else {
+		if (caps.m_Ext_Texture3D) {
+			bool extensionLoaded = true;
+			LOAD_GLES2_EXTENSION(TexImage3D, OES)
+			LOAD_GLES2_EXTENSION(TexSubImage3D, OES)
+			LOAD_GLES2_EXTENSION(CopyTexSubImage3D, OES)
+			LOAD_GLES2_EXTENSION(CompressedTexImage3D, OES)
+			LOAD_GLES2_EXTENSION(CompressedTexSubImage3D, OES)
+			LOAD_GLES2_EXTENSION(FramebufferTexture3D, OES)
+			if (!extensionLoaded) {
+				caps.m_Ext_Texture3D = 0;
+				caps.m_MaxTextureSize3D = 0;
+			}
+		}
+	}
+
+	return true;
+
+#undef LOAD_GLES2_EXTENSION
+#undef LOAD_GLES3_CORE
 }
 
 int CShaderDeviceMgrBase::GetAdapterCount() const {

@@ -6,6 +6,7 @@
 #include "gles2_hardwareconfig.h"
 #include "tier0/dbg.h"
 #include "tier0/platform.h"
+#include <stdlib.h>
 #include <string.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -245,6 +246,7 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t handle,
 	program.m_GLProgram = 0;
 	program.m_GLVertexShader = 0;
 	program.m_GLPixelShader = 0;
+	memset(program.m_VertexAttributes, 0xff, sizeof(program.m_ShaderSpecificVertexConstants));
 	for (int standardConstantIndex = 0; standardConstantIndex < STANDARD_CONSTANT_COUNT; ++standardConstantIndex) {
 		ShaderProgram_t::StandardConstant_t &standardConstant = program.m_StandardConstants[standardConstantIndex];
 		standardConstant.m_Location = -1;
@@ -314,12 +316,32 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t handle,
 	program.m_GLVertexShader = vertexShaderGLHandle;
 	program.m_GLPixelShader = pixelShaderGLHandle;
 
-	// Obtaining standard constants.
+	// Vertex attribute locations.
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_POSITION] = g_pGL->GetAttribLocation(programGLHandle, "a_Position");
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_NORMAL] = g_pGL->GetAttribLocation(programGLHandle, "a_Normal");
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_TANGENT] = g_pGL->GetAttribLocation(programGLHandle, "a_Tangent");
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_BONEINDEX] = g_pGL->GetAttribLocation(programGLHandle, "a_BoneIndices");
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_BONEWEIGHT] = g_pGL->GetAttribLocation(programGLHandle, "a_BoneWeights");
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_COLOR] = g_pGL->GetAttribLocation(programGLHandle, "a_Color");
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_SPECULAR] = g_pGL->GetAttribLocation(programGLHandle, "a_Specular");
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_TEXCOORD_FIRST] = g_pGL->GetAttribLocation(programGLHandle, "a_TexCoord");
+	char texCoordAttribute[32] = "a_TexCoord";
+	for (int texCoordIndex = 1; texCoordIndex < VERTEX_MAX_TEXTURE_COORDINATES; ++texCoordIndex) {
+		itoa(texCoordIndex, texCoordAttribute + (sizeof("a_TexCoord") - 1), 10);
+		program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_TEXCOORD_FIRST + texCoordIndex] =
+				g_pGL->GetAttribLocation(programGLHandle, texCoordAttribute);
+	}
+#ifdef SHADERAPI_GLES2_HARDWARE_MORPH
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_FLEXPOSITION] = g_pGL->GetAttribLocation(programGLHandle, "a_FlexPosition");
+	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_FLEXNORMAL] = g_pGL->GetAttribLocation(programGLHandle, "a_FlexNormal");
+#endif
+
+	// Standard constant locations.
 	program.m_StandardConstants[STANDARD_CONSTANT_MODELVIEWPROJ] = g_pGL->GetUniformLocation(programGLHandle, "g_ModelViewProj");
 	program.m_StandardConstants[STANDARD_CONSTANT_VIEWPROJ] = g_pGL->GetUniformLocation(programGLHandle, "g_ViewProj");
 	program.m_StandardConstants[STANDARD_CONSTANT_VIEWMODEL] = g_pGL->GetUniformLocation(programGLHandle, "g_ViewModel");
 
-	// Obtaining shader-specific constants.
+	// Shader-specific constant locations.
 	const char *shaderSpecificConstants[IShaderSourceProvider::MAX_SHADER_STAGE_SPECIFIC_CONSTANTS];
 	memset(shaderSpecificConstants, 0, sizeof(shaderSpecificConstants));
 	vertexProvider->GetConstants(vertexStaticIndex, vertexDynamicIndex, shaderSpecificConstants);
@@ -338,8 +360,35 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t handle,
 		}
 	}
 
-	// D0GTODO: Unbind (and then rebind) the current program because samplers are going to be set.
-	// D0GTODO: Samplers and vertex attributes.
+	// Sampler indices (first pixel, then vertex from the defined offset).
+	// D0GTODO: Mark the new program as the one currently bound.
+	g_pGL->UseProgram(programGLHandle);
+	const char *samplerNames[CShaderAPIGLES2::MAX_SAMPLERS];
+	memset(samplerNames, 0, sizeof(samplerNames));
+	int pixelSamplerCount = pixelProvider->GetSamplers(pixelStaticIndex, pixelDynamicIndex, samplerNames);
+	if (pixelSamplerCount > 0) {
+		for (unsigned int samplerIndex = 0; samplerIndex < CShaderAPIGLES2::MAX_SAMPLERS; ++samplerIndex) {
+			const char *samplerName = samplerNames[samplerIndex];
+			if (samplerName != NULL) {
+				int samplerLocation = g_pGL->GetUniformLocation(programGLHandle, samplerName);
+				if (samplerLocation >= 0) {
+					g_pGL->Uniform1i(samplerLocation, samplerIndex);
+				}
+			}
+		}
+	}
+	memset(samplerNames, 0, sizeof(samplerNames));
+	if (vertexProvider->GetSamplers(vertexStaticIndex, vertexDynamicIndex, samplerNames) > 0) {
+		for (unsigned int samplerIndex = 0; samplerIndex < CShaderAPIGLES2::MAX_SAMPLERS; ++samplerIndex) {
+			const char *samplerName = samplerNames[samplerIndex];
+			if (samplerName != NULL) {
+				int samplerLocation = g_pGL->GetUniformLocation(programGLHandle, samplerName);
+				if (samplerLocation >= 0) {
+					g_pGL->Uniform1i(samplerLocation, pixelSamplerCount + samplerIndex);
+				}
+			}
+		}
+	}
 }
 
 // Unused methods.

@@ -5,6 +5,7 @@
 #define SHADERAPI_GLES2_SHADER_H
 
 #include "gles2_glfuncs.h"
+#include "gles2_mesh.h"
 #include "shaderlib/ishadersourceprovider.h"
 #include "tier0/platform.h"
 #include "tier1/checksum_crc.h"
@@ -44,6 +45,8 @@ private:
 
 		GLuint m_GLVertexShader;
 		GLuint m_GLPixelShader;
+
+		int m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_COUNT];
 
 		struct StandardConstant_t {
 			int m_Location;

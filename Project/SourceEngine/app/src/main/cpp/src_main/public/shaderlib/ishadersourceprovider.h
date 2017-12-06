@@ -53,7 +53,11 @@ public:
 	// Writes the names of samplers to the array, with the indices the same as
 	// sampler index in BindTexture calls, or NULL for the samplers not used in
 	// the specified combo. Maximum number of samplers specified by Shader API.
-	virtual void GetSamplers(int staticIndex, int dynamicIndex, const char **samplerNames) const {}
+	// Returns the number of samplers used by the stage, which will be used as
+	// the offset for the next stage (first pixel, then vertex).
+	virtual int GetSamplers(int staticIndex, int dynamicIndex, const char **samplerNames) const {
+		return 0;
+	}
 
 protected:
 	IShaderSourceProvider() {}

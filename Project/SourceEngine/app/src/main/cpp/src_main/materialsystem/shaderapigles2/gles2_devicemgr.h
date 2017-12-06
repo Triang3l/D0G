@@ -56,11 +56,12 @@ protected:
 	virtual void DestroyInitGLESContext() = 0;
 
 	virtual void *GetGLES2CoreFunction(const char *name) = 0;
+	virtual void *GetGLES3CoreFunction(const char *name) { return GetGLES2CoreFunction(name); }
 	virtual void *GetGLES2ExtensionFunction(const char *name) = 0;
 
 private:
 	bool InitGLES2CoreFunctions();
-	void InitGLES2ExtensionsAndGLES3Core();
+	bool InitGLES2ExtensionsAndGLES3Core();
 };
 
 extern CShaderDeviceMgrBase *g_pShaderDeviceMgr;
