@@ -7,9 +7,10 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+IShaderUtil *g_pShaderUtil;
+
 static CShaderAPIGLES2 s_ShaderAPI;
 CShaderAPIGLES2 *g_pShaderAPI = &s_ShaderAPI;
-
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CShaderAPIGLES2, IShaderAPI,
 		SHADERAPI_INTERFACE_VERSION, s_ShaderAPI)
 

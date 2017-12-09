@@ -103,7 +103,7 @@ public:
 	virtual int MaxTextureDepth() const;
 	// virtual HDRType_t GetHDRType() const;
 	virtual HDRType_t GetHardwareHDRType() const;
-	// virtual bool SupportsPixelShaders_2_b() const;
+	virtual bool SupportsPixelShaders_2_b() const;
 	// virtual bool SupportsShaderModel_3_0() const;
 	virtual bool SupportsStreamOffset() const;
 	virtual int StencilBufferBits() const;
@@ -114,7 +114,7 @@ public:
 	virtual bool UsesSRGBCorrectBlending() const;
 	virtual bool HasFastVertexTextures() const;
 	virtual int MaxHWMorphBatchCount() const;
-	// virtual bool ActuallySupportsPixelShaders_2_b() const;
+	virtual bool ActuallySupportsPixelShaders_2_b() const;
 	virtual bool SupportsHDRMode(HDRType_t nHDRMode) const;
 
 	// virtual bool GetHDREnabled() const { return m_bHDREnabled; }

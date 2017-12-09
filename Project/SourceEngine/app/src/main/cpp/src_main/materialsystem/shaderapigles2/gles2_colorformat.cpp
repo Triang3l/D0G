@@ -9,10 +9,14 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-unsigned int CShaderAPIGLES2::ImageFormatToGLESFormatAndType(ImageFormat format) const {
+GLESImageFormat_t CShaderAPIGLES2::ImageFormatToGLESFormat(ImageFormat format) const {
 	// This doesn't care whether it's supported or not.
 	const HardwareCaps_t &caps = g_pHardwareConfig->Caps();
 	switch (format) {
+	case IMAGE_FORMAT_RGB888:
+		return GLESImageFormat_t(GL_RGB, GL_UNSIGNED_BYTE);
+	case IMAGE_FORMAT_RGBA8888:
+		return GLESImageFormat_t(GL_RGBA, GL_UNSIGNED_BYTE);
 	case IMAGE_FORMAT_BGR888:
 		// GL_EXT_bgra, fall back to RGB888.
 		return GLESImageFormat_t(GL_BGR_EXT, GL_UNSIGNED_BYTE);

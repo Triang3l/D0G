@@ -7,8 +7,11 @@
 #include "gles2_colorformat.h"
 #include "shaderapi/ishaderapi.h"
 #include "shaderapi/IShaderDevice.h"
+#include "shaderapi/ishaderutil.h"
 #include "tier1/utllinkedlist.h"
 #include "tier1/utlvector.h"
+
+extern IShaderUtil *g_pShaderUtil;
 
 struct Texture_t {
 	unsigned int m_GLTexture;
@@ -64,6 +67,8 @@ public:
 
 	virtual bool SetMode(void *hWnd, int nAdapter, const ShaderDeviceInfo_t &info);
 
+	virtual StateSnapshot_t TakeSnapshot();
+
 	// virtual ImageFormat GetNearestSupportedFormat(ImageFormat fmt) const;
 
 	virtual bool DoRenderTargetsNeedSeparateDepthBuffer() const;
@@ -92,7 +97,7 @@ private:
 
 	unsigned char m_ClearColor[3];
 	float m_ClearDepth;
-	int m_ClearStencil;
+	unsigned int m_ClearStencil;
 
 	CUtlFixedLinkedList<Texture_t> m_Textures;
 	CUtlVector<ShaderAPITextureHandle_t> m_TexturesDeleted;

@@ -12,6 +12,18 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+static CShaderManager s_ShaderManager;
+CShaderManager *g_pShaderManager = &s_ShaderManager;
+
+CShaderManager::CShaderManager() :
+		m_ShaderPrograms(256),
+		m_ShaderProgramStaticCombos(256),
+		m_ShaderProgramStaticComboDict(256),
+		m_NewProgramVertexDynamicIndices(0, 16),
+		m_NewProgramPixelDynamicIndices(0, 16),
+		m_NewProgramVertexShaderSource(0, 32),
+		m_NewProgramPixelShaderSource(0, 32) {}
+
 bool CShaderManager::ShaderProgramStaticComboLessFunc::Less(const ShaderProgramStaticComboDictEntry_t &entry1,
 		const ShaderProgramStaticComboDictEntry_t &entry2, void *context) {
 	return entry1.m_Checksum < entry2.m_Checksum;
@@ -335,6 +347,13 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t handle,
 	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_FLEXPOSITION] = g_pGL->GetAttribLocation(programGLHandle, "a_FlexPosition");
 	program.m_VertexAttributes[VERTEX_GLES2_ATTRIBUTE_FLEXNORMAL] = g_pGL->GetAttribLocation(programGLHandle, "a_FlexNormal");
 #endif
+	// Using a 32-bit mask of enabled vertex attributes. Extremely unlikely that a shader will have over
+	// 32 attributes and they will get location 32 and above, but still.
+	for (int attributeIndex = 0; attributeIndex < VERTEX_GLES2_ATTRIBUTE_COUNT; ++attributeIndex) {
+		if (program.m_VertexAttributes[attributeIndex] >= 32) {
+			program.m_VertexAttributes[attributeIndex] = -1;
+		}
+	}
 
 	// Standard constant locations.
 	program.m_StandardConstants[STANDARD_CONSTANT_MODELVIEWPROJ] = g_pGL->GetUniformLocation(programGLHandle, "g_ModelViewProj");
@@ -426,13 +445,13 @@ void CShaderAPIGLES2::DestroyPixelShader(PixelShaderHandle_t hShader) {
 }
 
 void CShaderAPIGLES2::BindVertexShader(VertexShaderHandle_t hVertexShader) {
-	AssertMsg(0, "Shaders must be bound using the transition table as programs.");
+	AssertMsg(0, "Shaders must be bound as programs.");
 }
 
 void CShaderAPIGLES2::BindGeometryShader(GeometryShaderHandle_t hGeometryShader) {
-	AssertMsg(0, "Shaders must be bound using the transition table as programs.");
+	AssertMsg(0, "Shaders must be bound as programs.");
 }
 
 void CShaderAPIGLES2::BindPixelShader(PixelShaderHandle_t hPixelShader) {
-	AssertMsg(0, "Shaders must be bound using the transition table as programs.");
+	AssertMsg(0, "Shaders must be bound as programs.");
 }

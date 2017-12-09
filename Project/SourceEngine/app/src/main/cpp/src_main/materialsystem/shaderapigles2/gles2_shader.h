@@ -9,6 +9,7 @@
 #include "shaderlib/ishadersourceprovider.h"
 #include "tier0/platform.h"
 #include "tier1/checksum_crc.h"
+#include "tier1/utllinkedlist.h"
 #include "tier1/UtlSortVector.h"
 #include "tier1/utlvector.h"
 
@@ -82,9 +83,9 @@ private:
 				const ShaderProgramStaticComboDictEntry_t &entry2, void *context);
 	};
 
-	CUtlVector<ShaderProgram_t> m_ShaderPrograms;
+	CUtlFixedLinkedList<ShaderProgram_t> m_ShaderPrograms;
 
-	CUtlVector<ShaderProgramStaticCombo_t> m_ShaderProgramStaticCombos;
+	CUtlFixedLinkedList<ShaderProgramStaticCombo_t> m_ShaderProgramStaticCombos;
 	// D0GTODO: Use CUtlDict?
 	CUtlSortVector<ShaderProgramStaticComboHandle_t, ShaderProgramStaticComboLessFunc> m_ShaderProgramStaticComboDict;
 

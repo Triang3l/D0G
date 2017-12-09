@@ -235,3 +235,7 @@ StateSnapshot_t CShaderShadowGLES2::TakeSnapshot() {
 	m_SnapshotDict.Insert(findEntry);
 	return findEntry.newSnapshot;
 }
+
+StateSnapshot_t CShaderAPIGLES2::TakeSnapshot() {
+	return g_pShaderShadow->TakeSnapshot();
+}

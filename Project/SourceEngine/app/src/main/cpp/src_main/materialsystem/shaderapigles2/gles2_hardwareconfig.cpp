@@ -282,6 +282,11 @@ HDRType_t CHardwareConfig::GetHardwareHDRType() const {
 	return HDR_TYPE_NONE;
 }
 
+bool CHardwareConfig::SupportsPixelShaders_2_b() const {
+	// Don't want sRGB output in shaders due to blending.
+	return false;
+}
+
 bool CHardwareConfig::SupportsStreamOffset() const {
 	return true;
 }
@@ -314,6 +319,11 @@ int CHardwareConfig::StencilBufferBits() const {
 int CHardwareConfig::MaxViewports() const {
 	// Requires NV_viewport_array, but never used in Source 2007, and was only planned for ShaderAPIDX10.
 	return 1;
+}
+
+bool CHardwareConfig::ActuallySupportsPixelShaders_2_b() const {
+	// Used to enable the flashlight random vectors texture, why not? It's just 32x32.
+	return true;
 }
 
 bool CHardwareConfig::SupportsHDRMode(HDRType_t nHDRMode) const {
