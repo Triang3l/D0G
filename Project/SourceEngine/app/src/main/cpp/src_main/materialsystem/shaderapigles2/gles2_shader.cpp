@@ -246,10 +246,10 @@ GLuint CShaderManager::CompileShader(const IShaderSourceProvider *provider, int 
 	return shader;
 }
 
-bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t handle,
+bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t programHandle,
 		const IShaderSourceProvider *vertexProvider, int vertexStaticIndex, int vertexDynamicIndex,
 		const IShaderSourceProvider *pixelProvider, int pixelStaticIndex, int pixelDynamicIndex) {
-	ShaderProgram_t &program = m_ShaderPrograms[handle];
+	ShaderProgram_t &program = m_ShaderPrograms[programHandle];
 
 	// Initializing variables to reduce the possibility of issues if the program fails to compile.
 	// VertexDynamicIndex and PixelDynamicIndex are required for searching.
@@ -408,6 +408,11 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t handle,
 			}
 		}
 	}
+}
+
+bool CShaderManager::IsStaticComboAlphaTested(ShaderProgramStaticComboHandle_t comboHandle) const {
+	const ShaderProgramStaticCombo_t &combo = m_ShaderProgramStaticCombos[comboHandle];
+	return combo.m_PixelProvider->IsStaticComboAlphaTested(combo.m_PixelStaticIndex);
 }
 
 // Unused methods.

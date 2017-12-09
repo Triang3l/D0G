@@ -35,6 +35,8 @@ public:
 			const char *vertexProviderName, int vertexStaticIndex,
 			const char *pixelProviderName, int pixelStaticIndex);
 
+	bool IsStaticComboAlphaTested(ShaderProgramStaticComboHandle_t comboHandle) const;
+
 private:
 	// Currently loaded programs.
 
@@ -100,7 +102,7 @@ private:
 
 	GLuint CompileShader(const IShaderSourceProvider *provider, int staticIndex, int dynamicIndex);
 
-	bool CompileVertexPixelProgram(ShaderProgramHandle_t handle,
+	bool CompileVertexPixelProgram(ShaderProgramHandle_t programHandle,
 			const IShaderSourceProvider *vertexProvider, int vertexStaticIndex, int vertexDynamicIndex,
 			const IShaderSourceProvider *pixelProvider, int pixelStaticIndex, int pixelDynamicIndex);
 };

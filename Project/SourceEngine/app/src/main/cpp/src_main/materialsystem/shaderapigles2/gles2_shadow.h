@@ -134,6 +134,10 @@ public:
 
 	StateSnapshot_t TakeSnapshot();
 
+	bool IsSnapshotTranslucent(StateSnapshotId_t snapshotId) const;
+	bool IsSnapshotAlphaTested(StateSnapshotId_t snapshotId) const;
+	bool IsSnapshotWritingDepth(StateSnapshotId_t snapshotId) const;
+
 private:
 	// Snapshot creation.
 

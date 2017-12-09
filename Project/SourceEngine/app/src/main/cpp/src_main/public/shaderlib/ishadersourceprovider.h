@@ -59,6 +59,11 @@ public:
 		return 0;
 	}
 
+	// In pixel shaders, returns whether a static combo may have alpha testing.
+	virtual bool IsStaticComboAlphaTested(int staticIndex) {
+		return false;
+	}
+
 protected:
 	IShaderSourceProvider() {}
 };

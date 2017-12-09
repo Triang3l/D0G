@@ -69,6 +69,11 @@ public:
 
 	virtual StateSnapshot_t TakeSnapshot();
 
+	virtual bool IsTranslucent(StateSnapshot_t id) const;
+	virtual bool IsAlphaTested(StateSnapshot_t id) const;
+	virtual bool UsesVertexAndPixelShaders(StateSnapshot_t id) const;
+	virtual bool IsDepthWriteEnabled(StateSnapshot_t id) const;
+
 	// virtual ImageFormat GetNearestSupportedFormat(ImageFormat fmt) const;
 
 	virtual bool DoRenderTargetsNeedSeparateDepthBuffer() const;
@@ -88,8 +93,6 @@ public:
 
 	GLESColorFormat_t ImageFormatToGLESFormat(ImageFormat format) const; // Returns format | (type << 16).
 
-	void CreateTextureHandles(ShaderAPITextureHandle_t *handles, int count);
-
 private:
 	int m_BackBufferWidth, m_BackBufferHeight;
 
@@ -103,6 +106,8 @@ private:
 	CUtlVector<ShaderAPITextureHandle_t> m_TexturesDeleted;
 	ShaderAPITextureHandle_t m_TexturesBound[MAX_SAMPLERS];
 	Sampler_t m_TextureActive;
+
+	void CreateTextureHandles(ShaderAPITextureHandle_t *handles, int count);
 };
 
 extern CShaderAPIGLES2 *g_pShaderAPI;

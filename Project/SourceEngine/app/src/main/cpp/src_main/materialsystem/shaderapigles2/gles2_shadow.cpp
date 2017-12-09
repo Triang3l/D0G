@@ -162,7 +162,7 @@ void CShaderShadowGLES2::SetPixelShader(const char *pFileName, int nStaticVshInd
 void CShaderShadowGLES2::SetVertexAndPixelShader(const char *pVshProviderName, int nStaticVshIndex,
 		const char *pPshProviderName, int nStaticPshIndex) {
 	if (pVshProviderName == NULL || pPshProviderName == NULL) {
-		m_ShadowState.m_ShaderProgramStaticCombo = -1;
+		m_ShadowState.m_ShaderProgramStaticCombo = SHADER_PROGRAM_STATIC_COMBO_HANDLE_INVALID;
 		return;
 	}
 	// D0GTODO: Check if this is ever called when GLES context isn't available.
@@ -238,4 +238,37 @@ StateSnapshot_t CShaderShadowGLES2::TakeSnapshot() {
 
 StateSnapshot_t CShaderAPIGLES2::TakeSnapshot() {
 	return g_pShaderShadow->TakeSnapshot();
+}
+
+bool CShaderShadowGLES2::IsSnapshotTranslucent(StateSnapshotId_t snapshotId) const {
+	return m_SnapshotList[snapshotId].m_BlendEnable;
+}
+
+bool CShaderAPIGLES2::IsTranslucent(StateSnapshot_t id) const {
+	return g_pShaderShadow->IsSnapshotTranslucent(id);
+}
+
+bool CShaderShadowGLES2::IsSnapshotAlphaTested(StateSnapshotId_t snapshotId) const {
+	ShaderProgramStaticComboHandle_t combo = m_SnapshotList[snapshotId].m_ShaderProgramStaticCombo;
+	if (combo == SHADER_PROGRAM_STATIC_COMBO_HANDLE_INVALID) {
+		return false;
+	}
+	return g_pShaderManager->IsStaticComboAlphaTested(combo);
+}
+
+bool CShaderAPIGLES2::IsAlphaTested(StateSnapshot_t id) const {
+	return g_pShaderShadow->IsSnapshotAlphaTested(id);
+}
+
+bool CShaderAPIGLES2::UsesVertexAndPixelShaders(StateSnapshot_t id) const {
+	return true;
+}
+
+bool CShaderShadowGLES2::IsSnapshotWritingDepth(StateSnapshotId_t snapshotId) const {
+	const ShadowState_t &snapshot = m_SnapshotList[snapshotId];
+	return snapshot.m_DepthEnable && snapshot.m_DepthWriteEnable;
+}
+
+bool CShaderAPIGLES2::IsDepthWriteEnabled(StateSnapshot_t id) const {
+	return g_pShaderShadow->IsSnapshotWritingDepth(id);
 }
