@@ -23,3 +23,6 @@ CShaderAPIGLES2::CShaderAPIGLES2() :
 		m_TexturesBound[sampler] = INVALID_SHADERAPI_TEXTURE_HANDLE;
 	}
 }
+
+void CShaderAPIGLES2::SetRasterState(const ShaderRasterState_t &state) {
+}

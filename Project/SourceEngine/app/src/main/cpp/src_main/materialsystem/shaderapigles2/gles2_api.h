@@ -65,6 +65,8 @@ public:
 	virtual void BindGeometryShader(GeometryShaderHandle_t hGeometryShader);
 	virtual void BindPixelShader(PixelShaderHandle_t hPixelShader);
 
+	virtual void SetRasterState(const ShaderRasterState_t &state);
+
 	virtual bool SetMode(void *hWnd, int nAdapter, const ShaderDeviceInfo_t &info);
 
 	virtual StateSnapshot_t TakeSnapshot();
@@ -91,7 +93,7 @@ public:
 	void OnGLESContextInit(bool restore);
 	void OnGLESContextShutdown();
 
-	GLESColorFormat_t ImageFormatToGLESFormat(ImageFormat format) const; // Returns format | (type << 16).
+	GLESColorFormat_t ImageFormatToGLES(ImageFormat format) const;
 
 private:
 	int m_BackBufferWidth, m_BackBufferHeight;
