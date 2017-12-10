@@ -744,12 +744,25 @@ struct surfacephysicsparams_t
 	float			dampening;
 };
 
+struct surfacegameprops_t
+{
+// game movement data
+	float			maxSpeedFactor;			// Modulates player max speed when walking on this surface
+	float			jumpFactor;				// Indicates how much higher the player should jump when on the surface
+// Game-specific data
+	unsigned short	material;
+	// Indicates whether or not the player is on a ladder.
+	unsigned char	climbable;
+	unsigned char	pad;
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: Each different material has an entry like this
 //-----------------------------------------------------------------------------
 struct surfacedata_t
 {
 	surfacephysicsparams_t	physics;	// physics parameters
+	surfacegameprops_t		game;		// Game data / properties
 
 // sounds
 	unsigned short	stepleft;
@@ -770,20 +783,6 @@ struct surfacedata_t
 // decals
 	unsigned short	bulletDecal;
 	unsigned short	bulletDecalCount;
-
-	// For linking to other game specific data
-	unsigned short	gameMaterial;
-	unsigned short	pad;				// not used yet
-
-	// Indicates how much the player max speed should be 
-	// raised or lowered while on this surface
-	float			maxSpeedFactor;
-
-	// Indicates how much higher the player should jump when on the surface
-	float			jumpFactor;
-
-	// Indicates whether or not the player is on a ladder.
-	int				climbable;
 };
 
 #define VPHYSICS_SURFACEPROPS_INTERFACE_VERSION	"VPhysicsSurfaceProps001"

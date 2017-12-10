@@ -1434,7 +1434,7 @@ void CPhysicsEnvironment::GetActiveObjects( IPhysicsObject **pOutputObjectList )
 const IPhysicsObject **CPhysicsEnvironment::GetObjectList( int *pOutputObjectCount ) const
 {
 	int objectCount = m_objects.Count();
-	if ( pOutputObjectCount != NULL )
+	if ( pOutputObjectCount )
 	{
 		*pOutputObjectCount = objectCount;
 	}

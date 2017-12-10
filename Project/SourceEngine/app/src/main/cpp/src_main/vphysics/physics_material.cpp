@@ -288,12 +288,12 @@ void CPhysicsSurfaceProps::GetPhysicsProperties( int materialIndex, float *densi
 
 void CPhysicsSurfaceProps::GetPhysicsParameters( int surfaceDataIndex, surfacephysicsparams_t *pParamsOut ) const
 {
-	if ( pParamsOut == NULL )
+	if ( !pParamsOut )
 	{
 		return;
 	}
 	CSurface *pSurface = GetInternalSurface( materialIndex );
-	if ( pSurface != NULL )
+	if ( pSurface )
 	{
 		*pParamsOut = pSurface->data.physics;
 	}
@@ -405,8 +405,7 @@ void CPhysicsSurfaceProps::CopyPhysicsProperties( CSurface *pOut, int baseIndex 
 	if ( pSurface )
 	{
 		pOut->data.physics = pSurface->data.physics;
-
-		pOut->data.gameMaterial = pSurface->data.gameMaterial;
+		pOut->data.game.material = pSurface->data.game.material;
 	}
 }
 
@@ -436,10 +435,10 @@ int CPhysicsSurfaceProps::ParseSurfaceData( const char *pFileName, const char *p
 
 			memset( &prop.data, 0, sizeof(prop.data) );
 			prop.m_name = m_strings.AddString( key );
-			prop.data.gameMaterial = 0;
-			prop.data.maxSpeedFactor = 1.0f;
-			prop.data.jumpFactor = 1.0f;
-			prop.data.climbable = 0.0f;
+			prop.data.game.material = 0;
+			prop.data.game.maxSpeedFactor = 1.0f;
+			prop.data.game.jumpFactor = 1.0f;
+			prop.data.game.climbable = 0;
 			CopyPhysicsProperties( &prop, baseMaterial );
 
 			do
@@ -522,15 +521,15 @@ int CPhysicsSurfaceProps::ParseSurfaceData( const char *pFileName, const char *p
 				}
 				else if ( !strcmpi( key, "maxspeedfactor" ) )
 				{
-					prop.data.maxSpeedFactor = atof(value);
+					prop.data.game.maxSpeedFactor = atof(value);
 				}
 				else if ( !strcmpi( key, "jumpfactor" ) )
 				{
-					prop.data.jumpFactor = atof(value);
+					prop.data.game.jumpFactor = atof(value);
 				}
 				else if ( !strcmpi( key, "climbable" ) )
 				{
-					prop.data.climbable = atoi(value);
+					prop.data.game.climbable = atoi(value);
 				}
 				else if ( !strcmpi( key, "stepleft" ) )
 				{
@@ -566,11 +565,11 @@ int CPhysicsSurfaceProps::ParseSurfaceData( const char *pFileName, const char *p
 				{
 					if ( strlen(value) == 1 && !isdigit(value[0]) )
 					{
-						prop.data.gameMaterial = toupper(value[0]);
+						prop.data.game.material = toupper(value[0]);
 					}
 					else
 					{
-						prop.data.gameMaterial = atoi(value);
+						prop.data.game.material = atoi(value);
 					}
 				}
 				else if ( !strcmpi( key, "dampening" ) )
