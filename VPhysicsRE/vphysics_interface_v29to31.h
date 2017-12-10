@@ -472,6 +472,18 @@ public:
 	virtual IPhysicsConstraintGroup *CreateConstraintGroup( void ) = 0;
 	virtual void DestroyConstraintGroup( IPhysicsConstraintGroup *pGroup ) = 0;
 
+	virtual IPhysicsShadowController *CreateShadowController( IPhysicsObject *pObject, bool allowTranslation, bool allowRotation ) = 0;
+	virtual void						DestroyShadowController( IPhysicsShadowController * ) = 0;
+
+	virtual IPhysicsPlayerController	*CreatePlayerController( IPhysicsObject *pObject ) = 0;
+	virtual void						DestroyPlayerController( IPhysicsPlayerController * ) = 0;
+
+	virtual IPhysicsMotionController	*CreateMotionController( IMotionEvent *pHandler ) = 0;
+	virtual void						DestroyMotionController( IPhysicsMotionController *pController ) = 0;
+
+	virtual IPhysicsVehicleController	*CreateVehicleController( IPhysicsObject *pVehicleBodyObject, const vehicleparams_t &params, unsigned int nVehicleType, IPhysicsGameTrace *pGameTrace ) = 0;
+	virtual void						DestroyVehicleController( IPhysicsVehicleController * ) = 0;
+
 	// disable collisions between these two objects
 	virtual void			DisableCollisions( IPhysicsObject *pObject1, IPhysicsObject *pObject2 ) = 0;
 	// Enables collisions that were previously disabled
@@ -500,18 +512,6 @@ public:
 	virtual void			SetCollisionEventHandler( IPhysicsCollisionEvent *pCollisionEvents ) = 0;
 	virtual void			SetObjectEventHandler( IPhysicsObjectEvent *pObjectEvents ) = 0;
 	virtual	void			SetConstraintEventHandler( IPhysicsConstraintEvent *pConstraintEvents ) = 0;
-
-	virtual IPhysicsShadowController *CreateShadowController( IPhysicsObject *pObject, bool allowTranslation, bool allowRotation ) = 0;
-	virtual void						DestroyShadowController( IPhysicsShadowController * ) = 0;
-
-	virtual IPhysicsPlayerController	*CreatePlayerController( IPhysicsObject *pObject ) = 0;
-	virtual void						DestroyPlayerController( IPhysicsPlayerController * ) = 0;
-
-	virtual IPhysicsMotionController	*CreateMotionController( IMotionEvent *pHandler ) = 0;
-	virtual void						DestroyMotionController( IPhysicsMotionController *pController ) = 0;
-
-	virtual IPhysicsVehicleController	*CreateVehicleController( IPhysicsObject *pVehicleBodyObject, const vehicleparams_t &params, unsigned int nVehicleType, IPhysicsGameTrace *pGameTrace ) = 0;
-	virtual void						DestroyVehicleController( IPhysicsVehicleController * ) = 0;
 
 	virtual void			SetQuickDelete( bool bQuick ) = 0;
 
