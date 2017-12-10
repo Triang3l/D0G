@@ -29,12 +29,12 @@ public:
 // IVP_Material
     virtual IVP_DOUBLE get_friction_factor()
 	{
-		return data.friction;
+		return data.physics.friction;
 	}
     
     virtual IVP_DOUBLE get_elasticity()
 	{
-		return data.elasticity;
+		return data.physics.elasticity;
 	}
     virtual const char *get_name();
 	// UNDONE: not implemented here.
@@ -136,6 +136,7 @@ public:
 	virtual int		SurfacePropCount( void ) const;
 	virtual int		GetSurfaceIndex( const char *pPropertyName ) const;
 	virtual void	GetPhysicsProperties( int surfaceDataIndex, float *density, float *thickness, float *friction, float *elasticity ) const;
+	virtual void	GetPhysicsParameters( int surfaceDataIndex, surfacephysicsparams_t *pParamsOut ) const;
 	virtual surfacedata_t *GetSurfaceData( int surfaceDataIndex );
 	virtual const char *GetString( unsigned short stringTableIndex ) const;
 	virtual const char *GetPropName( int surfaceDataIndex ) const;
@@ -275,13 +276,26 @@ void CPhysicsSurfaceProps::GetPhysicsProperties( int materialIndex, float *densi
 	if ( pSurface )
 	{
 		if ( friction )
-			*friction = (float)pSurface->data.friction;
+			*friction = pSurface->data.physics.friction;
 		if ( elasticity )
-			*elasticity = (float)pSurface->data.elasticity;
+			*elasticity = pSurface->data.physics.elasticity;
 		if ( density )
-			*density = pSurface->data.density;
+			*density = pSurface->data.physics.density;
 		if ( thickness )
-			*thickness = pSurface->data.thickness;
+			*thickness = pSurface->data.physics.thickness;
+	}
+}
+
+void CPhysicsSurfaceProps::GetPhysicsParameters( int surfaceDataIndex, surfacephysicsparams_t *pParamsOut ) const
+{
+	if ( pParamsOut == NULL )
+	{
+		return;
+	}
+	CSurface *pSurface = GetInternalSurface( materialIndex );
+	if ( pSurface != NULL )
+	{
+		*pParamsOut = pSurface->data.physics;
 	}
 }
 
@@ -390,10 +404,7 @@ void CPhysicsSurfaceProps::CopyPhysicsProperties( CSurface *pOut, int baseIndex 
 	CSurface *pSurface = GetInternalSurface( baseIndex );
 	if ( pSurface )
 	{
-		pOut->data.density = pSurface->data.density;
-		pOut->data.thickness = pSurface->data.thickness;
-		pOut->data.friction = pSurface->data.friction;
-		pOut->data.elasticity = pSurface->data.elasticity;
+		pOut->data.physics = pSurface->data.physics;
 
 		pOut->data.gameMaterial = pSurface->data.gameMaterial;
 	}
@@ -495,19 +506,19 @@ int CPhysicsSurfaceProps::ParseSurfaceData( const char *pFileName, const char *p
 				}
 				else if ( !strcmpi( key, "thickness" ) )
 				{
-					prop.data.thickness = atof(value);
+					prop.data.physics.thickness = atof(value);
 				}
 				else if ( !strcmpi( key, "density" ) )
 				{
-					prop.data.density = atof(value);
+					prop.data.physics.density = atof(value);
 				}
 				else if ( !strcmpi( key, "elasticity" ) )
 				{
-					prop.data.elasticity = atof(value);
+					prop.data.physics.elasticity = atof(value);
 				}
 				else if ( !strcmpi( key, "friction" ) )
 				{
-					prop.data.friction = atof(value);
+					prop.data.physics.friction = atof(value);
 				}
 				else if ( !strcmpi( key, "maxspeedfactor" ) )
 				{
@@ -564,7 +575,7 @@ int CPhysicsSurfaceProps::ParseSurfaceData( const char *pFileName, const char *p
 				}
 				else if ( !strcmpi( key, "dampening" ) )
 				{
-					prop.data.dampening = atof(value);
+					prop.data.physics.dampening = atof(value);
 				}
 				else
 				{

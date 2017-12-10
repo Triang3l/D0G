@@ -729,11 +729,28 @@ public:
 	virtual IPhysicsObject *GetEndObject( void ) = 0;
 };
 
+
+//-----------------------------------------------------------------------------
+// Purpose: These properties are defined per-material.  This is accessible at 
+//			each triangle in a collision mesh
+//-----------------------------------------------------------------------------
+struct surfacephysicsparams_t
+{
+// vphysics physical properties
+	float			friction;
+	float			elasticity;				// collision elasticity - used to compute coefficient of restitution
+	float			density;				// physical density (in kg / m^3)
+	float			thickness;				// material thickness if not solid (sheet materials) in inches
+	float			dampening;
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: Each different material has an entry like this
 //-----------------------------------------------------------------------------
 struct surfacedata_t
 {
+	surfacephysicsparams_t	physics;	// physics parameters
+
 // sounds
 	unsigned short	stepleft;
 	unsigned short	stepleftCount;
@@ -767,12 +784,6 @@ struct surfacedata_t
 
 	// Indicates whether or not the player is on a ladder.
 	int				climbable;
-	float			friction;
-	float			elasticity;
-	float			density;
-	float			thickness;
-
-	float			dampening;
 };
 
 #define VPHYSICS_SURFACEPROPS_INTERFACE_VERSION	"VPhysicsSurfaceProps001"
@@ -798,6 +809,9 @@ public:
 	// sets the global index table for world materials
 	// UNDONE: Make this per-CPhysCollide
 	virtual void	SetWorldMaterialIndexTable( int *pMapArray, int mapSize ) = 0;
+
+	// NOTE: Same as GetPhysicsProperties, but maybe more convenient
+	virtual void	GetPhysicsParameters( int surfaceDataIndex, surfacephysicsparams_t *pParamsOut ) const = 0;
 };
 
 abstract_class IPhysicsFluidController
