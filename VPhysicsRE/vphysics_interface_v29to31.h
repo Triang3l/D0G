@@ -393,7 +393,7 @@ abstract_class IPhysicsMotionController
 public:
 	virtual ~IPhysicsMotionController( void ) {}
 	virtual void SetEventHandler( IMotionEvent *handler ) = 0;
-	virtual void AttachObject( IPhysicsObject *pObject ) = 0;
+	virtual void AttachObject( IPhysicsObject *pObject, bool checkIfAlreadyAttached ) = 0;
 	virtual void DetachObject( IPhysicsObject *pObject ) = 0;
 
 	// returns the number of objects currently attached to the controller
