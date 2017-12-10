@@ -56,6 +56,7 @@ public:
 	float			GetSimulationTimestep( void ) const;
 	void			SetSimulationTimestep( float timestep );
 	float			GetSimulationTime( void ) const;
+	float			GetNextFrameTime( void ) const;
 	int				GetTimestepsSimulatedLast();
 	bool			IsInSimulation( void ) const;
 

@@ -1255,6 +1255,11 @@ float CPhysicsEnvironment::GetSimulationTime( void ) const
 	return (float)m_pPhysEnv->get_current_time().get_time();
 }
 
+float CPhysicsEnvironment::GetNextFrameTime( void ) const
+{
+	return (float)m_pPhysEnv->get_next_PSI_time().get_time();
+}
+
 int CPhysicsEnvironment::GetTimestepsSimulatedLast()
 {
 	return m_simPSIs;

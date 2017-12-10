@@ -493,6 +493,8 @@ public:
 	// returns the current simulation clock's value.  This is an absolute time.
 	virtual float			GetSimulationTime() const = 0;
 	virtual void			ResetSimulationClock() = 0;
+	// returns the current simulation clock's value at the next frame.  This is an absolute time.
+	virtual float			GetNextFrameTime( void ) const = 0;
 
 	// Collision callbacks (game code collision response)
 	virtual void			SetCollisionEventHandler( IPhysicsCollisionEvent *pCollisionEvents ) = 0;
