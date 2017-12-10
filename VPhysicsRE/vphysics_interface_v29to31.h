@@ -155,14 +155,14 @@ public:
 	// convert the convex into a compiled collision model
 	virtual CPhysCollide *ConvertPolysoupToCollide( CPhysPolysoup *pSoup ) = 0;
 	
+	// Free a collide that was created with ConvertConvexToCollide()
+	virtual void			DestroyCollide( CPhysCollide *pCollide ) = 0;
+
 	// Get the memory size in bytes of the collision model for serialization
 	virtual int				CollideSize( CPhysCollide *pCollide ) = 0;
 	// serialize the collide to a block of memory
 	virtual int				CollideWrite( char *pDest, CPhysCollide *pCollide ) = 0;
 
-	// Free a collide that was created with ConvertConvexToCollide()
-	// UNDONE: Move this up near the other Collide routines when the version is changed
-	virtual void			DestroyCollide( CPhysCollide *pCollide ) = 0;
 	// compute the volume of a collide
 	virtual float			CollideVolume( CPhysCollide *pCollide ) = 0;
 	// compute surface area for tools
