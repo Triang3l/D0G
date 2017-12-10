@@ -136,9 +136,6 @@ public:
 	// calculate volume of a convex element
 	virtual float			ConvexVolume( CPhysConvex *pConvex ) = 0;
 
-	// Convert an array of convex elements to a compiled collision model (this deletes the convex elements)
-	virtual CPhysCollide	*ConvertConvexToCollide( CPhysConvex **pConvex, int convexCount ) = 0;
-
 	virtual float			ConvexSurfaceArea( CPhysConvex *pConvex ) = 0;
 	// store game-specific data in a convex solid
 	virtual void			SetConvexGameData( CPhysConvex *pConvex, unsigned int gameData ) = 0;
@@ -154,6 +151,9 @@ public:
 	virtual void			PolysoupAddTriangle( CPhysPolysoup *pSoup, const Vector &a, const Vector &b, const Vector &c, int materialIndex7bits ) = 0;
 	// convert the convex into a compiled collision model
 	virtual CPhysCollide *ConvertPolysoupToCollide( CPhysPolysoup *pSoup, bool useMOPP ) = 0;
+	
+	// Convert an array of convex elements to a compiled collision model (this deletes the convex elements)
+	virtual CPhysCollide	*ConvertConvexToCollide( CPhysConvex **pConvex, int convexCount ) = 0;
 	
 	// Free a collide that was created with ConvertConvexToCollide()
 	virtual void			DestroyCollide( CPhysCollide *pCollide ) = 0;
