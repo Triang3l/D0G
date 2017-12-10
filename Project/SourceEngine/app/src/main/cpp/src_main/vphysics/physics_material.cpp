@@ -163,7 +163,6 @@ public:
 private:
 	CSurface	*GetInternalSurface( int materialIndex );
 	
-	void			AddStringList( CUtlVector<CUtlSymbol> &list, unsigned short *index, unsigned short *count );
 	void			CopyPhysicsProperties( CSurface *pOut, int baseIndex );
 	bool			AddFileToDatabase( const char *pFilename );
 
@@ -373,38 +372,13 @@ int CPhysicsSurfaceProps::GetIVPMaterialIndex( IVP_Material *pIVP )
 	return -1;
 }
 
-void CPhysicsSurfaceProps::AddStringList( CUtlVector<CUtlSymbol> &list, unsigned short *index, unsigned short *count )
-{
-	if ( !list.Size() )
-		return;
-
-	*index = m_soundList.AddMultipleToTail( list.Size() );
-	for ( int i = 0; i < list.Size(); i++ )
-	{
-		m_soundList[*index+i] = list[i];
-	}
-	*count = list.Size();
-}
-
-
-enum stringlist_t
-{
-	STRING_STEP_LEFT = 0,
-	STRING_STEP_RIGHT,
-	STRING_IMPACT_SOUND,
-	STRING_SCRAPE_SOUND,
-	STRING_BULLET_IMPACT_SOUND,
-	STRING_BULLET_DECAL,
-
-	STRING_LIST_COUNT
-};
-
 void CPhysicsSurfaceProps::CopyPhysicsProperties( CSurface *pOut, int baseIndex )
 {
 	CSurface *pSurface = GetInternalSurface( baseIndex );
 	if ( pSurface )
 	{
 		pOut->data.physics = pSurface->data.physics;
+		pOut->data.sounds = pSurface->data.sounds;
 		pOut->data.game.material = pSurface->data.game.material;
 	}
 }
@@ -429,10 +403,6 @@ int CPhysicsSurfaceProps::ParseSurfaceData( const char *pFileName, const char *p
 			CSurface prop;
 			int baseMaterial = GetSurfaceIndex( "default" );
 
-			// we accumulate the sound/string lists here separately in case
-			// they aren't contiguous in the text file
-			CUtlVector<CUtlSymbol>	stringlists[STRING_LIST_COUNT];
-
 			memset( &prop.data, 0, sizeof(prop.data) );
 			prop.m_name = m_strings.AddString( key );
 			prop.data.game.material = 0;
@@ -450,51 +420,6 @@ int CPhysicsSurfaceProps::ParseSurfaceData( const char *pFileName, const char *p
 					if ( GetSurfaceIndex( m_strings.String(prop.m_name) ) >= 0 )
 						break;
 
-					// Add each string list in one contiguous chunk
-					AddStringList( stringlists[STRING_STEP_LEFT], &prop.data.stepleft, &prop.data.stepleftCount );
-					AddStringList( stringlists[STRING_STEP_RIGHT], &prop.data.stepright, &prop.data.steprightCount );
-					AddStringList( stringlists[STRING_IMPACT_SOUND], &prop.data.impact, &prop.data.impactCount );
-					AddStringList( stringlists[STRING_SCRAPE_SOUND], &prop.data.scrape, &prop.data.scrapeCount );
-					AddStringList( stringlists[STRING_BULLET_IMPACT_SOUND], &prop.data.bulletImpact, &prop.data.bulletImpactCount );
-					AddStringList( stringlists[STRING_BULLET_DECAL], &prop.data.bulletDecal, &prop.data.bulletDecalCount );
-
-					CSurface *pSurface = GetInternalSurface( baseMaterial );
-
-					// Fill in empty slots with default values;
-					if ( pSurface )
-					{
-						// Write any values that the script explicitly did not set
-						if ( !prop.data.stepleftCount )
-						{
-							prop.data.stepleft = pSurface->data.stepleft;
-							prop.data.stepleftCount = pSurface->data.stepleftCount;
-						}
-						if ( !prop.data.steprightCount )
-						{
-							prop.data.stepright = pSurface->data.stepright;
-							prop.data.steprightCount = pSurface->data.steprightCount;
-						}
-						if ( !prop.data.impactCount )
-						{
-							prop.data.impact = pSurface->data.impact;
-							prop.data.impactCount = pSurface->data.impactCount;
-						}
-						if ( !prop.data.scrapeCount )
-						{
-							prop.data.scrape = pSurface->data.scrape;
-							prop.data.scrapeCount = pSurface->data.scrapeCount;
-						}
-						if ( !prop.data.bulletImpactCount )
-						{
-							prop.data.bulletImpact = pSurface->data.bulletImpact;
-							prop.data.bulletImpactCount = pSurface->data.bulletImpactCount;
-						}
-						if ( !prop.data.bulletDecalCount )
-						{
-							prop.data.bulletDecal = pSurface->data.bulletDecal;
-							prop.data.bulletDecalCount = pSurface->data.bulletDecalCount;
-						}
-					}
 					m_props.AddToTail( prop );
 					break;
 				}
@@ -534,32 +459,52 @@ int CPhysicsSurfaceProps::ParseSurfaceData( const char *pFileName, const char *p
 				else if ( !strcmpi( key, "stepleft" ) )
 				{
 					CUtlSymbol sym = m_strings.AddString( value );
-					stringlists[STRING_STEP_LEFT].AddToTail( sym );
+					prop.data.sounds.stepleft = m_soundList.AddToTail( sym );
 				}
 				else if ( !strcmpi( key, "stepright" ) )
 				{
 					CUtlSymbol sym = m_strings.AddString( value );
-					stringlists[STRING_STEP_RIGHT].AddToTail( sym );
+					prop.data.sounds.stepright = m_soundList.AddToTail( sym );
 				}
-				else if ( !strcmpi( key, "impact" ) )
+				else if ( !strcmpi( key, "impactsoft" ) )
 				{
 					CUtlSymbol sym = m_strings.AddString( value );
-					stringlists[STRING_IMPACT_SOUND].AddToTail( sym );
+					prop.data.sounds.impactSoft = m_soundList.AddToTail( sym );
 				}
-				else if ( !strcmpi( key, "scrape" ) )
+				else if ( !strcmpi( key, "impacthard" ) )
 				{
 					CUtlSymbol sym = m_strings.AddString( value );
-					stringlists[STRING_SCRAPE_SOUND].AddToTail( sym );
+					prop.data.sounds.impactHard = m_soundList.AddToTail( sym );
+				}
+				else if ( !strcmpi( key, "scrapesmooth" ) )
+				{
+					CUtlSymbol sym = m_strings.AddString( value );
+					prop.data.sounds.scrapeSmooth = m_soundList.AddToTail( sym );
+				}
+				else if ( !strcmpi( key, "scraperough" ) )
+				{
+					CUtlSymbol sym = m_strings.AddString( value );
+					prop.data.sounds.scrapeRough = m_soundList.AddToTail( sym );
 				}
 				else if ( !strcmpi( key, "bulletimpact" ) )
 				{
 					CUtlSymbol sym = m_strings.AddString( value );
-					stringlists[STRING_BULLET_IMPACT_SOUND].AddToTail( sym );
+					prop.data.sounds.bulletImpact = m_soundList.AddToTail( sym );
 				}
-				else if ( !strcmpi( key, "bulletdecal" ) )
+				else if ( !strcmpi( key, "break" ) )
 				{
 					CUtlSymbol sym = m_strings.AddString( value );
-					stringlists[STRING_BULLET_DECAL].AddToTail( sym );
+					prop.data.sounds.breakSound = m_soundList.AddToTail( sym );
+				}
+				else if ( !strcmpi( key, "strain" ) )
+				{
+					CUtlSymbol sym = m_strings.AddString( value );
+					prop.data.sounds.strainSound = m_soundList.AddToTail( sym );
+				}
+				else if ( !strcmpi( key, "rolling" ) )
+				{
+					CUtlSymbol sym = m_strings.AddString( value );
+					prop.data.sounds.rolling = m_soundList.AddToTail( sym );
 				}
 				else if ( !strcmpi( key, "gamematerial" ) )
 				{

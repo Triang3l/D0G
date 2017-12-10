@@ -744,6 +744,42 @@ struct surfacephysicsparams_t
 	float			dampening;
 };
 
+struct surfacesoundnames_t
+{
+	unsigned short	stepleft;
+	unsigned short	stepright;
+
+	unsigned short	impactSoft;
+	unsigned short	impactHard;
+
+	unsigned short	scrapeSmooth;
+	unsigned short	scrapeRough;
+
+	unsigned short	bulletImpact;
+	unsigned short	rolling;
+
+	unsigned short	breakSound;
+	unsigned short	strainSound;
+};
+
+struct surfacesoundhandles_t
+{
+	short	stepleft;
+	short	stepright;
+
+	short	impactSoft;
+	short	impactHard;
+
+	short	scrapeSmooth;
+	short	scrapeRough;
+
+	short	bulletImpact;
+	short	rolling;
+
+	short	breakSound;
+	short	strainSound;
+};
+
 struct surfacegameprops_t
 {
 // game movement data
@@ -762,27 +798,10 @@ struct surfacegameprops_t
 struct surfacedata_t
 {
 	surfacephysicsparams_t	physics;	// physics parameters
+	surfacesoundnames_t		sounds;		// names of linked sounds
 	surfacegameprops_t		game;		// Game data / properties
 
-// sounds
-	unsigned short	stepleft;
-	unsigned short	stepleftCount;
-	
-	unsigned short	stepright;
-	unsigned short	steprightCount;
-	
-	unsigned short	impact;
-	unsigned short	impactCount;
-
-	unsigned short	scrape;
-	unsigned short	scrapeCount;
-
-	unsigned short	bulletImpact;
-	unsigned short	bulletImpactCount;
-
-// decals
-	unsigned short	bulletDecal;
-	unsigned short	bulletDecalCount;
+	surfacesoundhandles_t		soundhandles;
 };
 
 #define VPHYSICS_SURFACEPROPS_INTERFACE_VERSION	"VPhysicsSurfaceProps001"
