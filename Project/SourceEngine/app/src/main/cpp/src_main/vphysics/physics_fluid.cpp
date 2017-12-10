@@ -139,7 +139,9 @@ CPhysicsFluidController *CreateFluidController( IVP_Environment *pEnvironment, C
     // ---------------------------------------------
 	// UNDONE: Expose these other parameters
     IVP_Template_Buoyancy buoyancy_input;
-    buoyancy_input.medium_density			= 1000.0f; // density of water (unit: kg/m^3)
+    float matDensity = 1000.0f; // density of water (unit: kg/m^3)
+    physprops->GetPhysicsProperties( pFluidObject->GetMaterialIndexInternal(), &matDensity, NULL, NULL, NULL );
+    buoyancy_input.medium_density			= ConvertDensityToIVP( matDensity );
     buoyancy_input.pressure_damp_factor     = pParams->damping;
     buoyancy_input.viscosity_factor       = 0.0f;
     buoyancy_input.torque_factor          = 0.01f;
