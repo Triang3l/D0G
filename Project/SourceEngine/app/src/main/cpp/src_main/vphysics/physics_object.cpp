@@ -202,7 +202,7 @@ void CPhysicsObject::Sleep( void )
 }
 
 
-bool CPhysicsObject::IsAsleep( void )
+bool CPhysicsObject::IsAsleep( void ) const
 {
 	if ( m_sleepState == OBJ_AWAKE )
 		return false;
@@ -237,7 +237,7 @@ void CPhysicsObject::SetCallbackFlags( unsigned short callbackflags )
 }
 
 
-unsigned short CPhysicsObject::GetCallbackFlags( void )
+unsigned short CPhysicsObject::GetCallbackFlags( void ) const
 {
 	return m_callbacks;
 }
@@ -253,7 +253,7 @@ unsigned short CPhysicsObject::GetGameFlags( void ) const
 	return m_gameFlags;
 }
 
-bool CPhysicsObject::IsStatic( void )
+bool CPhysicsObject::IsStatic( void ) const
 {
 	if ( m_pObject->get_core()->physical_unmoveable )
 		return true;
@@ -302,7 +302,7 @@ bool CPhysicsObject::IsControlling( IVP_Controller *pController )
 	return false;
 }
 
-bool CPhysicsObject::IsGravityEnabled()
+bool CPhysicsObject::IsGravityEnabled() const
 {
 	if ( !IsStatic() )
 	{
@@ -312,7 +312,7 @@ bool CPhysicsObject::IsGravityEnabled()
 	return false;
 }
 
-bool CPhysicsObject::IsDragEnabled()
+bool CPhysicsObject::IsDragEnabled() const
 {
 	if ( !IsStatic() )
 	{
@@ -323,13 +323,13 @@ bool CPhysicsObject::IsDragEnabled()
 }
 
 
-bool CPhysicsObject::IsMotionEnabled()
+bool CPhysicsObject::IsMotionEnabled() const
 {
 	return m_pObject->get_core()->pinned ? false : true;
 }
 
 
-bool CPhysicsObject::IsMoveable()
+bool CPhysicsObject::IsMoveable() const
 {
 	if ( IsStatic() || !IsMotionEnabled() )
 		return false;
@@ -470,7 +470,7 @@ void CPhysicsObject::SetInertia( const Vector &inertia )
 }
 
 
-void CPhysicsObject::GetDamping( float *speed, float *rot )
+void CPhysicsObject::GetDamping( float *speed, float *rot ) const
 {
 	IVP_Core *pCore = m_pObject->get_core();
 	if ( speed )
@@ -530,37 +530,37 @@ void CPhysicsObject::SetContents( unsigned int contents )
 }
 
 // converts HL local units to HL world units
-void CPhysicsObject::LocalToWorld( Vector &worldPosition, const Vector &localPosition )
+void CPhysicsObject::LocalToWorld( Vector *worldPosition, const Vector &localPosition ) const
 {
 	matrix3x4_t matrix;
-	GetPositionMatrix( matrix );
+	GetPositionMatrix( &matrix );
 	// copy in case the src == dest
-	VectorTransform( Vector(localPosition), matrix, worldPosition );
+	VectorTransform( Vector(localPosition), matrix, *worldPosition );
 }
 
 // Converts world HL units to HL local/object units
-void CPhysicsObject::WorldToLocal( Vector &localPosition, const Vector &worldPosition )
+void CPhysicsObject::WorldToLocal( Vector *localPosition, const Vector &worldPosition ) const
 {
 	matrix3x4_t matrix;
-	GetPositionMatrix( matrix );
+	GetPositionMatrix( &matrix );
 	// copy in case the src == dest
-	VectorITransform( Vector(worldPosition), matrix, localPosition );
+	VectorITransform( Vector(worldPosition), matrix, *localPosition );
 }
 
-void CPhysicsObject::LocalToWorldVector( Vector &worldVector, const Vector &localVector )
+void CPhysicsObject::LocalToWorldVector( Vector *worldVector, const Vector &localVector ) const
 {
 	matrix3x4_t matrix;
-	GetPositionMatrix( matrix );
+	GetPositionMatrix( &matrix );
 	// copy in case the src == dest
-	VectorRotate( Vector(localVector), matrix, worldVector );
+	VectorRotate( Vector(localVector), matrix, *worldVector );
 }
 
-void CPhysicsObject::WorldToLocalVector( Vector &localVector, const Vector &worldVector )
+void CPhysicsObject::WorldToLocalVector( Vector *localVector, const Vector &worldVector ) const
 {
 	matrix3x4_t matrix;
-	GetPositionMatrix( matrix );
+	GetPositionMatrix( &matrix );
 	// copy in case the src == dest
-	VectorIRotate( Vector(worldVector), matrix, localVector );
+	VectorIRotate( Vector(worldVector), matrix, *localVector );
 }
 
 
@@ -612,7 +612,7 @@ void CPhysicsObject::ApplyForceOffset( const Vector &forceVector, const Vector &
 	Wake();
 }
 
-void CPhysicsObject::CalculateForceOffset( const Vector &forceVector, const Vector &worldPosition, Vector &centerForce, AngularImpulse &centerTorque )
+void CPhysicsObject::CalculateForceOffset( const Vector &forceVector, const Vector &worldPosition, Vector *centerForce, AngularImpulse *centerTorque ) const
 {
 	IVP_U_Point pos;
 	IVP_U_Float_Point force;
@@ -632,11 +632,11 @@ void CPhysicsObject::CalculateForceOffset( const Vector &forceVector, const Vect
     cross_point_dir.calc_cross_product( &point_d_ws, &force);
     m_world_f_core->inline_vimult3( &cross_point_dir, &cross_point_dir);
 
-	ConvertAngularImpulseToHL( cross_point_dir, centerTorque );
-	ConvertForceImpulseToHL( force, centerForce );
+	ConvertAngularImpulseToHL( cross_point_dir, *centerTorque );
+	ConvertForceImpulseToHL( force, *centerForce );
 }
 
-void CPhysicsObject::CalculateVelocityOffset( const Vector &forceVector, const Vector &worldPosition, Vector &centerVelocity, AngularImpulse &centerAngularVelocity )
+void CPhysicsObject::CalculateVelocityOffset( const Vector &forceVector, const Vector &worldPosition, Vector *centerVelocity, AngularImpulse *centerAngularVelocity ) const
 {
 	IVP_U_Point pos;
 	IVP_U_Float_Point force;
@@ -657,9 +657,9 @@ void CPhysicsObject::CalculateVelocityOffset( const Vector &forceVector, const V
     m_world_f_core->inline_vimult3( &cross_point_dir, &cross_point_dir);
 
     cross_point_dir.set_pairwise_mult( &cross_point_dir, core->get_inv_rot_inertia());
-	ConvertAngularImpulseToHL( cross_point_dir, centerAngularVelocity );
+	ConvertAngularImpulseToHL( cross_point_dir, *centerAngularVelocity );
     force.set_multiple( &force, core->get_inv_mass() );
-	ConvertForceImpulseToHL( force, centerVelocity );
+	ConvertForceImpulseToHL( force, *centerVelocity );
 }
 
 void CPhysicsObject::ApplyTorqueCenter( const AngularImpulse &torqueImpulse )
@@ -677,7 +677,7 @@ void CPhysicsObject::ApplyTorqueCenter( const AngularImpulse &torqueImpulse )
 	Wake();
 }
 
-void CPhysicsObject::GetPosition( Vector *worldPosition, QAngle *angles )
+void CPhysicsObject::GetPosition( Vector *worldPosition, QAngle *angles ) const
 {
 	IVP_U_Matrix matrix;
 	m_pObject->get_m_world_f_object_AT( &matrix );
@@ -693,15 +693,15 @@ void CPhysicsObject::GetPosition( Vector *worldPosition, QAngle *angles )
 }
 
 
-void CPhysicsObject::GetPositionMatrix( matrix3x4_t& positionMatrix )
+void CPhysicsObject::GetPositionMatrix( matrix3x4_t *positionMatrix ) const
 {
 	IVP_U_Matrix matrix;
 	m_pObject->get_m_world_f_object_AT( &matrix );
-	ConvertMatrixToHL( matrix, positionMatrix );
+	ConvertMatrixToHL( matrix, *positionMatrix );
 }
 
 
-void CPhysicsObject::GetVelocity( Vector *velocity, AngularImpulse *angularVelocity )
+void CPhysicsObject::GetVelocity( Vector *velocity, AngularImpulse *angularVelocity ) const
 {
 	if ( !velocity && !angularVelocity )
 		return;
@@ -723,7 +723,7 @@ void CPhysicsObject::GetVelocity( Vector *velocity, AngularImpulse *angularVeloc
 	}
 }
 
-void CPhysicsObject::GetVelocityAtPoint( const Vector &worldPosition, Vector &velocity )
+void CPhysicsObject::GetVelocityAtPoint( const Vector &worldPosition, Vector *pVelocity ) const
 {
 	IVP_Core *core = m_pObject->get_core();
 	IVP_U_Point pos;
@@ -744,7 +744,7 @@ void CPhysicsObject::GetVelocityAtPoint( const Vector &worldPosition, Vector &ve
     speed.add(&core->speed, &cross);
     speed.add(&core->speed_change);
 
-	ConvertPositionToHL( speed, velocity );
+	ConvertPositionToHL( speed, pVelocity );
 }
 
 
@@ -877,7 +877,7 @@ void GetWorldCoordFromSynapse( IVP_Synapse_Friction *pfriction, IVP_U_Point &wor
 }
 
 
-bool CPhysicsObject::GetContactPoint( Vector *contactPoint, IPhysicsObject **contactObject )
+bool CPhysicsObject::GetContactPoint( Vector *contactPoint, IPhysicsObject **contactObject ) const
 {
 	IVP_Synapse_Friction *pfriction = m_pObject->get_first_friction_synapse();
 	if ( !pfriction )
@@ -961,7 +961,7 @@ void CPhysicsObject::RestoreShadowController( IPhysicsShadowController *pShadowC
 	m_pShadow = pShadowController;
 }
 
-int CPhysicsObject::GetShadowPosition( Vector *position, QAngle *angles )
+int CPhysicsObject::GetShadowPosition( Vector *position, QAngle *angles ) const
 {
 	IVP_U_Matrix matrix;
 	
@@ -1040,7 +1040,7 @@ float CPhysicsObject::GetAngularDragInDirection( const IVP_U_Float_Point &angVel
 		IVP_Inline_Math::fabsd( angVelocity.k[2] * m_angDragBasis.z );
 }
 
-const char *CPhysicsObject::GetName()
+const char *CPhysicsObject::GetName() const
 {
 	return m_pObject->get_name();
 }
@@ -1057,7 +1057,7 @@ void CPhysicsObject::SetMaterialIndex( int materialIndex )
 }
 
 // convert square velocity magnitude from IVP to HL
-float CPhysicsObject::GetEnergy()
+float CPhysicsObject::GetEnergy() const
 {
 	IVP_Core *pCore = m_pObject->get_core();
 	IVP_FLOAT energy = 0.0f;
@@ -1075,7 +1075,7 @@ float CPhysicsObject::ComputeShadowControl( const hlshadowcontrol_params_t &para
 	return ComputeShadowControllerHL( this, params, secondsToArrival, dt );
 }
 
-float CPhysicsObject::GetSphereRadius()
+float CPhysicsObject::GetSphereRadius() const
 {
 	if ( m_collideType != COLLIDE_BALL )
 		return 0;
@@ -1133,12 +1133,12 @@ void CPhysicsObject::RemoveTrigger()
 }
 
 
-bool CPhysicsObject::IsTrigger()
+bool CPhysicsObject::IsTrigger() const
 {
 	return m_pObject->get_controller_phantom() != NULL ? true : false;
 }
 
-bool CPhysicsObject::IsFluid()
+bool CPhysicsObject::IsFluid() const
 {
     IVP_Controller_Phantom *pController = m_pObject->get_controller_phantom();
 	if ( pController )
@@ -1395,7 +1395,7 @@ BEGIN_SIMPLE_DATADESC( vphysics_save_cphysicsobject_t )
 	DEFINE_FIELD( vphysics_save_cphysicsobject_t,		collideType,		FIELD_SHORT	),
 END_DATADESC()
 
-bool CPhysicsObject::IsCollisionEnabled()
+bool CPhysicsObject::IsCollisionEnabled() const
 {
 	return GetObject()->is_collision_detection_enabled() ? true : false;
 }
