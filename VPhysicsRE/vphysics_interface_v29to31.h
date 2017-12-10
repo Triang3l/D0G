@@ -784,19 +784,20 @@ public:
 	// parses a text file containing surface prop keys
 	virtual int		ParseSurfaceData( const char *pFilename, const char *pTextfile ) = 0;
 	// current number of entries in the database
-	virtual int		SurfacePropCount( void ) = 0;
+	virtual int		SurfacePropCount( void ) const = 0;
 
-	virtual int		GetSurfaceIndex( const char *pSurfacePropName ) = 0;
-	virtual void	GetPhysicsProperties( int surfaceDataIndex, float *density, float *thickness, float *friction, float *elasticity ) = 0;
+	virtual int		GetSurfaceIndex( const char *pSurfacePropName ) const = 0;
+	virtual void	GetPhysicsProperties( int surfaceDataIndex, float *density, float *thickness, float *friction, float *elasticity ) const = 0;
 
 	virtual surfacedata_t	*GetSurfaceData( int surfaceDataIndex ) = 0;
-	virtual const char		*GetString( unsigned short stringTableIndex, int offset ) = 0;
+	virtual const char		*GetString( unsigned short stringTableIndex ) const = 0;
 
 
-	virtual const char		*GetPropName( int surfaceDataIndex ) = 0;
+	virtual const char		*GetPropName( int surfaceDataIndex ) const = 0;
 
 	// sets the global index table for world materials
-	virtual void			SetWorldMaterialIndexTable( int *pMapArray, int mapSize ) = 0;
+	// UNDONE: Make this per-CPhysCollide
+	virtual void	SetWorldMaterialIndexTable( int *pMapArray, int mapSize ) = 0;
 };
 
 abstract_class IPhysicsFluidController
