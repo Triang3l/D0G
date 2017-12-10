@@ -804,11 +804,11 @@ abstract_class IPhysicsFluidController
 public:
 	virtual ~IPhysicsFluidController( void ) {}
 
-	virtual void			SetGameData( void *pGameData ) = 0;
-	virtual void			*GetGameData( void ) const = 0;
+	virtual void	SetGameData( void *pGameData ) = 0;
+	virtual void	*GetGameData( void ) const = 0;
 
-	virtual void			GetSurfacePlane( Vector *pNormal, float *pDist ) = 0;
-	virtual float			GetDensity() = 0;
+	virtual void	GetSurfacePlane( Vector *pNormal, float *pDist ) const = 0;
+	virtual float	GetDensity() const = 0;
 };
 
 
@@ -820,7 +820,6 @@ struct fluidparams_t
 {
 	Vector4D	surfacePlane;	// x,y,z normal, dist (plane constant) fluid surface
 	Vector		currentVelocity; // velocity of the current in inches/second
-	float		density;		// the fluid's density
 	float		damping;		// damping factor for buoyancy (tweak)
 	float		torqueFactor;
 	float		viscosityFactor;
@@ -832,7 +831,6 @@ struct fluidparams_t
 	{
 		Vector4DCopy( src.surfacePlane, surfacePlane );
 		VectorCopy( src.currentVelocity, currentVelocity );
-		density = src.density;
 		damping = src.damping;
 		torqueFactor = src.torqueFactor;
 		viscosityFactor = src.viscosityFactor;
