@@ -1431,6 +1431,20 @@ void CPhysicsEnvironment::GetActiveObjects( IPhysicsObject **pOutputObjectList )
 	m_pSleepEvents->GetActiveObjects( pOutputObjectList );
 }
 
+const IPhysicsObject **CPhysicsEnvironment::GetObjectList( int *pOutputObjectCount ) const
+{
+	int objectCount = m_objects.Count();
+	if ( pOutputObjectCount != NULL )
+	{
+		*pOutputObjectCount = objectCount;
+	}
+	if ( objectCount == 0 )
+	{
+		return NULL;
+	}
+	return m_objects.Base();
+}
+
 void CPhysicsEnvironment::SetAirDensity( float density )
 {
 	CDragController *pDrag = ((CDragController *)m_pDragController);

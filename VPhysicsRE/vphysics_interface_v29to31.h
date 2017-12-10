@@ -517,6 +517,7 @@ public:
 
 	virtual int				GetActiveObjectCount() const = 0;
 	virtual void			GetActiveObjects( IPhysicsObject **pOutputObjectList ) const = 0;
+	virtual const IPhysicsObject **GetObjectList( int *pOutputObjectCount ) const = 0;
 
 	virtual void			CleanupDeleteList( void ) = 0;
 	virtual void			EnableDeleteQueue( bool enable ) = 0;

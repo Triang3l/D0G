@@ -88,6 +88,7 @@ public:
 	virtual void GetGravity( Vector *pGravityVector ) const;
 	virtual int	 GetActiveObjectCount( void ) const;
 	virtual void GetActiveObjects( IPhysicsObject **pOutputObjectList ) const;
+	virtual const IPhysicsObject **GetObjectList( int *pOutputObjectCount ) const;
 
 	IVP_Environment	*GetIVPEnvironment( void ) { return m_pPhysEnv; }
 	void		ClearDeadObjects( void );
