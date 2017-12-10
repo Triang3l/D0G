@@ -744,6 +744,20 @@ struct surfacephysicsparams_t
 	float			dampening;
 };
 
+struct surfaceaudioparams_t
+{
+// sounds / audio data
+	float			reflectivity;		// like elasticity, but how much sound should be reflected by this surface
+	float			hardnessFactor;	// like elasticity, but only affects impact sound choices
+	float			roughnessFactor;	// like friction, but only affects scrape sound choices
+
+// audio thresholds
+	float			roughThreshold;	// surface roughness > this causes "rough" scrapes, < this causes "smooth" scrapes
+	float			hardThreshold;	// surface hardness > this causes "hard" impacts, < this causes "soft" impacts
+	float			hardVelocityThreshold;	// collision velocity > this causes "hard" impacts, < this causes "soft" impacts
+									// NOTE: Hard impacts must meet both hardnessFactor AND velocity thresholds
+};
+
 struct surfacesoundnames_t
 {
 	unsigned short	stepleft;
@@ -798,6 +812,7 @@ struct surfacegameprops_t
 struct surfacedata_t
 {
 	surfacephysicsparams_t	physics;	// physics parameters
+	surfaceaudioparams_t	audio;		// audio parameters
 	surfacesoundnames_t		sounds;		// names of linked sounds
 	surfacegameprops_t		game;		// Game data / properties
 

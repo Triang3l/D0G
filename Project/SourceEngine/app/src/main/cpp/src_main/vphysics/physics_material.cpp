@@ -378,6 +378,7 @@ void CPhysicsSurfaceProps::CopyPhysicsProperties( CSurface *pOut, int baseIndex 
 	if ( pSurface )
 	{
 		pOut->data.physics = pSurface->data.physics;
+		pOut->data.audio = pSurface->data.audio;
 		pOut->data.sounds = pSurface->data.sounds;
 		pOut->data.game.material = pSurface->data.game.material;
 	}
@@ -455,6 +456,30 @@ int CPhysicsSurfaceProps::ParseSurfaceData( const char *pFileName, const char *p
 				else if ( !strcmpi( key, "climbable" ) )
 				{
 					prop.data.game.climbable = atoi(value);
+				}
+				else if ( !strcmpi( key, "audioReflectivity" ) )
+				{
+					prop.data.audio.reflectivity = atof(value);
+				}
+				else if ( !strcmpi( key, "audioHardnessFactor" ) )
+				{
+					prop.data.audio.hardnessFactor = atof(value);
+				}
+				else if ( !strcmpi( key, "audioHardMinVelocity" ) )
+				{
+					prop.data.audio.hardVelocityThreshold = atof(value);
+				}
+				else if ( !strcmpi( key, "audioRoughnessFactor" ) )
+				{
+					prop.data.audio.roughnessFactor = atof(value);
+				}
+				else if ( !strcmpi( key, "scrapeRoughThreshold" ) )
+				{
+					prop.data.audio.roughThreshold = atof(value);
+				}
+				else if ( !strcmpi( key, "impactHardThreshold" ) )
+				{
+					prop.data.audio.hardThreshold = atof(value);
 				}
 				else if ( !strcmpi( key, "stepleft" ) )
 				{
