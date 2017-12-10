@@ -48,7 +48,7 @@ public:
 	CPhysPolysoup *PolysoupCreate( void );
 	void PolysoupDestroy( CPhysPolysoup *pSoup );
 	void PolysoupAddTriangle( CPhysPolysoup *pSoup, const Vector &a, const Vector &b, const Vector &c, int materialIndex7bits );
-	CPhysCollide *ConvertPolysoupToCollide( CPhysPolysoup *pSoup );
+	CPhysCollide *ConvertPolysoupToCollide( CPhysPolysoup *pSoup, bool useMOPP );
 
 	int	CollideSize( CPhysCollide *pCollide );
 	int	CollideWrite( char *pDest, CPhysCollide *pCollide );
@@ -624,7 +624,7 @@ void CPhysicsCollision::PolysoupAddTriangle( CPhysPolysoup *pSoup, const Vector 
 	pSoup->m_builder.insert_ledge(pLedge);
 }
 
-CPhysCollide *CPhysicsCollision::ConvertPolysoupToCollide( CPhysPolysoup *pSoup )
+CPhysCollide *CPhysicsCollision::ConvertPolysoupToCollide( CPhysPolysoup *pSoup, bool useMOPP )
 {
 	if ( !pSoup->m_isValid )
 		return NULL;

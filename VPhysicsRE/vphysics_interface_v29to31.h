@@ -153,7 +153,7 @@ public:
 	// add a triangle to the soup
 	virtual void			PolysoupAddTriangle( CPhysPolysoup *pSoup, const Vector &a, const Vector &b, const Vector &c, int materialIndex7bits ) = 0;
 	// convert the convex into a compiled collision model
-	virtual CPhysCollide *ConvertPolysoupToCollide( CPhysPolysoup *pSoup ) = 0;
+	virtual CPhysCollide *ConvertPolysoupToCollide( CPhysPolysoup *pSoup, bool useMOPP ) = 0;
 	
 	// Free a collide that was created with ConvertConvexToCollide()
 	virtual void			DestroyCollide( CPhysCollide *pCollide ) = 0;
@@ -281,7 +281,6 @@ abstract_class IPhysicsCollisionEvent
 public:
 	// returns the two objects that collided, time between last collision of these objects
 	// and an opaque data block of collision information
-	// UNDONE: Add API to query the collision data and get speed/surface normal/etc
 	// NOTE: PreCollision/PostCollision ALWAYS come in matched pairs!!!
 	virtual void PreCollision( vcollisionevent_t *pEvent ) = 0;
 	virtual void PostCollision( vcollisionevent_t *pEvent ) = 0;
