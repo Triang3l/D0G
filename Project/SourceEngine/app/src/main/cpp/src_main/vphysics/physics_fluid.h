@@ -22,7 +22,7 @@ class CPhysicsObject;
 class CPhysicsFluidController : public IPhysicsFluidController
 {
 public:
-	CPhysicsFluidController( CBuoyancyAttacher *pBuoy, IVP_Liquid_Surface_Descriptor_Simple *pLiquid, CPhysicsObject *pObject );
+	CPhysicsFluidController( CBuoyancyAttacher *pBuoy, IVP_Liquid_Surface_Descriptor_Simple *pLiquid, CPhysicsObject *pObject, int contents );
 	~CPhysicsFluidController( void );
 
 	void SetGameData( void *pGameData );
@@ -32,11 +32,13 @@ public:
 
 	class IVP_Real_Object *GetIVPObject() const;
 	float GetDensity() const;
+	int GetContents() const;
 
 private:
 	CBuoyancyAttacher					*m_pBuoyancy;
 	IVP_Liquid_Surface_Descriptor_Simple *m_pLiquidSurface;
 	CPhysicsObject						*m_pObject;
+	int m_contentsMask;
 	void *m_pGameData;
 };
 

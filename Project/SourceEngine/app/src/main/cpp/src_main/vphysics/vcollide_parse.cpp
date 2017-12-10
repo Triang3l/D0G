@@ -321,6 +321,14 @@ void CVPhysicsParse::ParseFluid( fluid_t *pFluid, IVPhysicsKeyHandler *unknownKe
 		{
 			ReadVector( value, pFluid->params.currentVelocity );
 		}
+		else if ( !Q_stricmp( key, "contents" ) )
+		{
+			pFluid->params.contents = atoi( value );
+		}
+		else if ( !Q_stricmp( key, "surfaceprop" ) )
+		{
+			Q_strncpy( pFluid->surfaceprop, value, sizeof(pFluid->surfaceprop) );
+		}
 		else
 		{
 			if ( unknownKeyHandler )

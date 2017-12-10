@@ -25,11 +25,12 @@ public:
 	float m_density;
 };
 
-CPhysicsFluidController::CPhysicsFluidController( CBuoyancyAttacher *pBuoy, IVP_Liquid_Surface_Descriptor_Simple *pLiquid, CPhysicsObject *pObject )
+CPhysicsFluidController::CPhysicsFluidController( CBuoyancyAttacher *pBuoy, IVP_Liquid_Surface_Descriptor_Simple *pLiquid, CPhysicsObject *pObject, int contents )
 {
 	m_pBuoyancy = pBuoy;
 	m_pLiquidSurface = pLiquid;
 	m_pObject = pObject;
+	m_contentsMask = contents;
 }
 
 CPhysicsFluidController::~CPhysicsFluidController( void )
@@ -68,6 +69,11 @@ IVP_Real_Object *CPhysicsFluidController::GetIVPObject() const
 float CPhysicsFluidController::GetDensity() const
 {
 	return m_pBuoyancy->m_density;
+}
+
+int CPhysicsFluidController::GetContents() const
+{
+	return m_contentsMask;
 }
 
 
@@ -151,7 +157,7 @@ CPhysicsFluidController *CreateFluidController( IVP_Environment *pEnvironment, C
     // -------------------------------------------------------------------------------
     CBuoyancyAttacher *attacher_to_cores_buoyancy = new CBuoyancyAttacher( buoyancy_input, pPhantom->get_intruding_cores(), lsd );
 
-	CPhysicsFluidController *pFluid = new CPhysicsFluidController( attacher_to_cores_buoyancy, lsd, pFluidObject );
+	CPhysicsFluidController *pFluid = new CPhysicsFluidController( attacher_to_cores_buoyancy, lsd, pFluidObject, pParams->contents );
 	pFluid->SetGameData( pParams->pGameData );
 	pPhantom->client_data = static_cast<void *>(pFluid);
 

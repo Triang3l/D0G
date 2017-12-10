@@ -809,6 +809,7 @@ public:
 
 	virtual void	GetSurfacePlane( Vector *pNormal, float *pDist ) const = 0;
 	virtual float	GetDensity() const = 0;
+	virtual int		GetContents() const = 0;
 };
 
 
@@ -825,6 +826,7 @@ struct fluidparams_t
 	float		viscosityFactor;
 	void		*pGameData;
 	bool		useAerodynamics;// true if this controller should calculate surface pressure
+	int			contents;
 
 	fluidparams_t() {}
 	fluidparams_t( fluidparams_t const& src )
@@ -834,6 +836,7 @@ struct fluidparams_t
 		damping = src.damping;
 		torqueFactor = src.torqueFactor;
 		viscosityFactor = src.viscosityFactor;
+		contents = src.contents;
 	}
 };
 
