@@ -38,6 +38,7 @@ class CPhysicsCollision : public IPhysicsCollision
 public:
 	CPhysConvex	*ConvexFromVerts( Vector **pVerts, int vertCount );
 	CPhysConvex	*ConvexFromPlanes( float *pPlanes, int planeCount, float mergeDistance );
+	virtual CPhysConvex *BBoxToConvex( const Vector &mins, const Vector &maxs );
 	float ConvexVolume( CPhysConvex *pConvex );
 	float ConvexSurfaceArea( CPhysConvex *pConvex );
 	CPhysCollide *ConvertConvexToCollide( CPhysConvex **pConvex, int convexCount );
@@ -542,6 +543,13 @@ CPhysCollide *CPhysicsCollision::GetBBoxCache( const Vector &mins, const Vector 
 			return m_bboxCache[i].pCollide;
 	}
 	return NULL;
+}
+
+CPhysConvex *CPhysicsCollision::BBoxToConvex( const Vector &mins, const Vector &maxs )
+{
+	Vector boxVerts[8], *ppVerts[8];
+	InitBoxVerts( boxVerts, ppVerts, mins, maxs );
+	return ConvexFromVerts( ppVerts, 8 );
 }
 
 

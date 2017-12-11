@@ -141,6 +141,7 @@ public:
 	virtual void			SetConvexGameData( CPhysConvex *pConvex, unsigned int gameData ) = 0;
 	// If not converted, free the convex elements with this call
 	virtual void			ConvexFree( CPhysConvex *pConvex ) = 0;
+	virtual CPhysConvex		*BBoxToConvex( const Vector &mins, const Vector &maxs ) = 0;
 
 	// concave objects
 	// create a triangle soup
