@@ -207,26 +207,29 @@ static void GetAllLedges( const CPhysCollide *pCollide, IVP_U_BigVector<IVP_Comp
 CPhysConvex	*CPhysicsCollision::ConvexFromVerts( Vector **pVerts, int vertCount )
 {
 	IVP_U_Vector<IVP_U_Point> points;
+	IVP_U_Point *tmp = NULL;
 	int i;
 
-	for ( i = 0; i < vertCount; i++ )
+	if ( vertCount > 0 )
 	{
-		IVP_U_Point *tmp = new IVP_U_Point;
-		
-		ConvertPositionToIVP( *pVerts[i], *tmp );
+		tmp = new IVP_U_Point[vertCount];
+		for ( i = 0; i < vertCount; i++ )
+		{
+			ConvertPositionToIVP( *pVerts[i], tmp[i] );
 
-		BEGIN_IVP_ALLOCATION();
-		points.add( tmp );
-		END_IVP_ALLOCATION();
+			BEGIN_IVP_ALLOCATION();
+			points.add( &tmp[i] );
+			END_IVP_ALLOCATION();
+		}
 	}
 
 	BEGIN_IVP_ALLOCATION();
 	IVP_Compact_Ledge *pLedge = IVP_SurfaceBuilder_Pointsoup::convert_pointsoup_to_compact_ledge( &points );
 	END_IVP_ALLOCATION();
 
-	for ( i = 0; i < points.len(); i++ )
+	if ( tmp )
 	{
-		delete points.element_at(i);
+		delete[] tmp;
 	}
 	points.clear();
 
