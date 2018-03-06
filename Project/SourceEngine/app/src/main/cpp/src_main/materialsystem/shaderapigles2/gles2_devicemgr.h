@@ -33,7 +33,7 @@ public:
 	};
 	// Should be followed by UpdateGLESSurface.
 	virtual UpdateGLESContextResult_t UpdateGLESContext(const ShaderDeviceInfo_t &info) = 0;
-	// NULL hWnd can be used to make GL calls without drawing.
+	// Null hWnd can be used to make GL calls without drawing.
 	virtual bool UpdateGLESSurface(void *hWnd, int width, int height) = 0; 
 	virtual bool ResizeCurrentGLESSurface(int width, int height) = 0;
 	virtual bool IsGLESContextActive() const = 0;

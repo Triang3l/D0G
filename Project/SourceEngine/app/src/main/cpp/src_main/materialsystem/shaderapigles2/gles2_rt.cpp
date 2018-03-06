@@ -56,7 +56,7 @@ void CShaderAPIGLES2::SetViewports(int nCount, const ShaderViewport_t *pViewport
 }
 
 int CShaderAPIGLES2::GetViewports(ShaderViewport_t *pViewports, int nMax) const {
-	if (pViewports != NULL && nMax > 0) {
+	if (pViewports != nullptr && nMax > 0) {
 		pViewports[0] = m_Viewport;
 	}
 	return 1;

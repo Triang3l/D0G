@@ -26,7 +26,7 @@ CHardwareConfig::CHardwareConfig() {
 bool CHardwareConfig::CheckGLExtension(const char *extensionString, const char *extensionName) {
 	size_t length = strlen(extensionName);
 	const char *searchIn = extensionString, *found;
-	while ((found = strstr(searchIn, extensionName)) != NULL) {
+	while ((found = strstr(searchIn, extensionName)) != nullptr) {
 		if ((found == extensionString || found[-1] == ' ') &&
 				(found[length] == ' ' || found[length] == '\0')) {
 			return true;	
@@ -44,7 +44,7 @@ void CHardwareConfig::SetupHardwareCaps() {
 	// Version.
 	const char *glesVersionString = g_pGL->GetString(GL_VERSION);
 	unsigned int glesVersionMajor, glesVersionMinor;
-	if (glesVersionString != NULL && sscanf(glesVersionString, "OpenGL ES %d.%d", &glesVersionMajor, glesVersionMinor) >= 2) {
+	if (glesVersionString != nullptr && sscanf(glesVersionString, "OpenGL ES %d.%d", &glesVersionMajor, glesVersionMinor) >= 2) {
 		m_Caps.m_GLESVersion = glesVersionMajor * 100 + glesVersionMinor * 10;
 		if (m_Caps.m_GLESVersion < 200) {
 			m_Caps.m_GLESVersion = 200;

@@ -34,7 +34,7 @@ void CShaderShadowGLES2::SetDefaultState() {
 	BlendFuncSeparateAlpha(SHADER_BLEND_ONE, SHADER_BLEND_ZERO);
 	EnableCulling(true);
 	EnableAlphaToCoverage(false);
-	SetVertexAndPixelShader(NULL, 0, NULL, 0);
+	SetVertexAndPixelShader(nullptr, 0, nullptr, 0);
 }
 
 void CShaderShadowGLES2::DepthFunc(ShaderDepthFunc_t depthFunc) {
@@ -161,7 +161,7 @@ void CShaderShadowGLES2::SetPixelShader(const char *pFileName, int nStaticVshInd
 
 void CShaderShadowGLES2::SetVertexAndPixelShader(const char *pVshProviderName, int nStaticVshIndex,
 		const char *pPshProviderName, int nStaticPshIndex) {
-	if (pVshProviderName == NULL || pPshProviderName == NULL) {
+	if (pVshProviderName == nullptr || pPshProviderName == nullptr) {
 		m_ShadowState.m_ShaderProgramStaticCombo = SHADER_PROGRAM_STATIC_COMBO_HANDLE_INVALID;
 		return;
 	}

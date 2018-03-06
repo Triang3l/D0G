@@ -16,16 +16,16 @@
 
 CShaderDeviceMgrEGL::CShaderDeviceMgrEGL() :
 		m_EGLDisplay(EGL_NO_DISPLAY),
-		m_EGLConfig(NULL),
+		m_EGLConfig(nullptr),
 		m_EGLConfigID(0),
 		m_EGLConfigStencilSize(0),
 		m_EGLConfigSamples(1),
 		m_EGLContext(EGL_NO_CONTEXT),
 		m_EGLPbuffer(EGL_NO_SURFACE),
-		m_EGLSurfaceWindow((EGLNativeWindowType) NULL),
+		m_EGLSurfaceWindow((EGLNativeWindowType) nullptr),
 		m_EGLSurface(EGL_NO_SURFACE),
 		m_EGLContextActive(false),
-		m_GLES2Library(NULL) {}
+		m_GLES2Library(nullptr) {}
 
 bool CShaderDeviceMgrEGL::InitWindowSystemInterface() {
 	m_EGLDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -34,7 +34,7 @@ bool CShaderDeviceMgrEGL::InitWindowSystemInterface() {
 		return false;
 	}
 
-	if (!eglInitialize(m_EGLDisplay, NULL, NULL)) {
+	if (!eglInitialize(m_EGLDisplay, nullptr, nullptr)) {
 		Warning("EGL ERROR: Failed to initialize EGL.\n");
 		m_EGLDisplay = EGL_NO_DISPLAY;
 		return false;
@@ -56,7 +56,7 @@ void CShaderDeviceMgrEGL::ShutdownWindowSystemInterface() {
 bool CShaderDeviceMgrEGL::InitGLES2Library() {
 #ifdef __ANDROID__
 	m_GLES2Library = dlopen("libGLESv2.so", RTLD_LAZY | RTLD_GLOBAL);
-	return (m_GLES2Library != NULL);
+	return (m_GLES2Library != nullptr);
 #else
 #error Implement CShaderDeviceMgrEGL::InitGLES2Library for this platform.
 #endif
@@ -64,9 +64,9 @@ bool CShaderDeviceMgrEGL::InitGLES2Library() {
 
 void CShaderDeviceMgrEGL::ShutdownGLES2Library() {
 #ifdef __ANDROID__
-	if (m_GLES2Library != NULL) {
+	if (m_GLES2Library != nullptr) {
 		dlclose(m_GLES2Library);
-		m_GLES2Library = NULL;
+		m_GLES2Library = nullptr;
 	}
 #else
 #error Implement CShaderDeviceMgrEGL::ShutdownGLES2Library for this platform.
@@ -91,10 +91,10 @@ bool CShaderDeviceMgrEGL::CreateInitGLESContext() {
 		EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
 		EGL_NONE
 	};
-	EGLConfig config = NULL;
+	EGLConfig config = nullptr;
 	int configCount = 0;
 	EGLBoolean configChosen = eglChooseConfig(m_EGLDisplay, configAttribs, &config, 1, &configCount);
-	if (!configChosen || configCount < 0 || config == NULL) {
+	if (!configChosen || configCount < 0 || config == nullptr) {
 		Warning("EGL ERROR: Failed to choose a config for the temporary OpenGL ES context.\n");
 		return false;
 	}
@@ -154,13 +154,13 @@ EGLConfig CShaderDeviceMgrEGL::RequestEGLConfig(int depthSize, int depthEncoding
 		attribs[attribCount++] = depthEncoding;
 	}
 
-	EGLConfig config = NULL;
+	EGLConfig config = nullptr;
 	int configCount = 0;
 	if (!eglChooseConfig(m_EGLDisplay, attribs, &config, 1, &configCount)) {
-		return NULL;
+		return nullptr;
 	}
 	if (configCount < 1) {
-		return NULL;
+		return nullptr;
 	}
 	return config;
 }
@@ -179,7 +179,7 @@ UpdateGLESContextResult_t CShaderDeviceMgrEGL::UpdateGLESContext(const ShaderDev
 	int stencilSize = m_EGLConfigStencilSize;
 	int samples = m_EGLConfigSamples;
 	if (requestConfig) {
-		config = NULL;
+		config = nullptr;
 		const int depthSizes[] = { 24, 16, 16 };
 		const int depthEncodings[] = { EGL_DONT_CARE, EGL_DEPTH_ENCODING_NONLINEAR_NV, EGL_DONT_CARE };
 		for (unsigned int depthFormat = 0; depthFormat < (sizeof(depthSizes) / sizeof(depthSizes[0])); ++depthFormat) {
@@ -190,14 +190,14 @@ UpdateGLESContextResult_t CShaderDeviceMgrEGL::UpdateGLESContext(const ShaderDev
 			for (stencilSize = (info.m_bUseStencil ? 8 : 0); stencilSize >= 0; stencilSize -= 8) {
 				if (!info.m_bWaitForVSync) {
 					config = RequestEGLConfig(depthSize, depthEncoding, stencilSize, 0);
-					if (config != NULL) { break; }
+					if (config != nullptr) { break; }
 				}
 				config = RequestEGLConfig(depthSize, depthEncoding, stencilSize, EGL_DONT_CARE);
-				if (config != NULL) { break; }
+				if (config != nullptr) { break; }
 			}
-			if (config != NULL) { break; }
+			if (config != nullptr) { break; }
 		}
-		if (config == NULL) {
+		if (config == nullptr) {
 			Warning("EGL ERROR: Failed to choose a EGL config.\n");
 			ShutdownGLES();
 			return UPDATE_GLES_CONTEXT_FAILED;
@@ -264,9 +264,9 @@ bool CShaderDeviceMgrEGL::UpdateGLESSurface(void *hWnd, int width, int height) {
 		eglDestroySurface(m_EGLDisplay, m_EGLSurface);
 		m_EGLSurface = EGL_NO_SURFACE;
 	}
-	m_EGLSurfaceWindow = (EGLNativeWindowType) NULL;
+	m_EGLSurfaceWindow = (EGLNativeWindowType) nullptr;
 
-	if (hWnd == NULL) {
+	if (hWnd == nullptr) {
 		return true;
 	}
 
@@ -274,7 +274,7 @@ bool CShaderDeviceMgrEGL::UpdateGLESSurface(void *hWnd, int width, int height) {
 #ifdef __ANDROID__
 	ANativeWindow_setBuffersGeometry(nativeWindow, width, height, m_EGLConfigNativeVisualID);
 #endif
-	m_EGLSurface = eglCreateWindowSurface(m_EGLDisplay, m_EGLConfig, nativeWindow, NULL);
+	m_EGLSurface = eglCreateWindowSurface(m_EGLDisplay, m_EGLConfig, nativeWindow, nullptr);
 	if (m_EGLSurface == EGL_NO_SURFACE) {
 		Warning("EGL ERROR: Failed to create a window surface.\n");
 		return false;
@@ -289,7 +289,7 @@ bool CShaderDeviceMgrEGL::UpdateGLESSurface(void *hWnd, int width, int height) {
 }
 
 bool CShaderDeviceMgrEGL::ResizeCurrentGLESSurface(int width, int height) {
-	if (m_EGLSurfaceWindow == (EGLNativeWindowType) NULL) {
+	if (m_EGLSurfaceWindow == (EGLNativeWindowType) nullptr) {
 		return true;
 	}
 	return UpdateGLESSurface((void *) m_EGLSurfaceWindow, width, height);
@@ -329,6 +329,6 @@ void CShaderDeviceMgrEGL::ShutdownGLES() {
 		eglDestroySurface(m_EGLDisplay, m_EGLPbuffer);
 		m_EGLPbuffer = EGL_NO_SURFACE;
 	}
-	m_EGLConfig = NULL;
+	m_EGLConfig = nullptr;
 	m_EGLConfigID = 0;
 }

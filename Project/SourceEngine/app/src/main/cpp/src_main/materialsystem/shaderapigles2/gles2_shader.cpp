@@ -75,11 +75,11 @@ ShaderProgramStaticComboHandle_t CShaderManager::GetVertexPixelProgramStaticComb
 			IShaderSourceProvider::SHADER_STAGE_VERTEX, vertexProviderName);
 	const IShaderSourceProvider *pixelProvider = g_pShaderUtil->FindShaderSourceProvider(
 			IShaderSourceProvider::SHADER_STAGE_PIXEL, pixelProviderName);
-	if (vertexProvider == NULL || pixelProvider == NULL) {
-		if (vertexProvider == NULL) {
+	if (vertexProvider == nullptr || pixelProvider == nullptr) {
+		if (vertexProvider == nullptr) {
 			Warning("Vertex shader provider %s not found!\n", vertexProviderName);
 		}
-		if (pixelProvider == NULL) {
+		if (pixelProvider == nullptr) {
 			Warning("Pixel shader provider %s not found!\n", pixelProviderName);
 		}
 		return SHADER_PROGRAM_STATIC_COMBO_HANDLE_INVALID;
@@ -216,7 +216,7 @@ GLuint CShaderManager::CompileShader(const IShaderSourceProvider *provider, int 
 	provider->GetSource(staticIndex, dynamicIndex, *source);
 
 	int partCount = source->Count();
-	g_pGL->ShaderSource(shader, partCount, source->Base(), NULL);
+	g_pGL->ShaderSource(shader, partCount, source->Base(), nullptr);
 	g_pGL->CompileShader(shader);
 	int compileStatus = GL_FALSE;
 	g_pGL->GetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
@@ -231,7 +231,7 @@ GLuint CShaderManager::CompileShader(const IShaderSourceProvider *provider, int 
 				infoLogLength = sizeof(infoLog);
 			}
 			infoLog[0] = '\0';
-			g_pGL->GetShaderInfoLog(shader, infoLogLength, NULL, infoLog);
+			g_pGL->GetShaderInfoLog(shader, infoLogLength, nullptr, infoLog);
 			infoLog[infoLogLength - 1] = '\0';
 			Warning("%s\n", infoLog);
 		}
@@ -305,7 +305,7 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t programHand
 				infoLogLength = sizeof(infoLog);
 			}
 			infoLog[0] = '\0';
-			g_pGL->GetProgramInfoLog(programGLHandle, infoLogLength, NULL, infoLog);
+			g_pGL->GetProgramInfoLog(programGLHandle, infoLogLength, nullptr, infoLog);
 			infoLog[infoLogLength - 1] = '\0';
 			Warning("%s\n", infoLog);
 		}
@@ -365,7 +365,7 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t programHand
 	memset(shaderSpecificConstants, 0, sizeof(shaderSpecificConstants));
 	vertexProvider->GetConstants(vertexStaticIndex, vertexDynamicIndex, shaderSpecificConstants);
 	for (int constantIndex = 0; constantIndex < IShaderSourceProvider::MAX_SHADER_STAGE_SPECIFIC_CONSTANTS; ++constantIndex) {
-		if (shaderSpecificConstants[constantIndex] != NULL) {
+		if (shaderSpecificConstants[constantIndex] != nullptr) {
 			program.m_ShaderSpecificVertexConstants[constantIndex] = g_pGL->GetUniformLocation(
 					programGLHandle, shaderSpecificConstants[constantIndex]);
 		}
@@ -373,7 +373,7 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t programHand
 	memset(shaderSpecificConstants, 0, sizeof(shaderSpecificConstants));
 	pixelProvider->GetConstants(pixelStaticIndex, pixelDynamicIndex, shaderSpecificConstants);
 	for (int constantIndex = 0; constantIndex < IShaderSourceProvider::MAX_SHADER_STAGE_SPECIFIC_CONSTANTS; ++constantIndex) {
-		if (shaderSpecificConstants[constantIndex] != NULL) {
+		if (shaderSpecificConstants[constantIndex] != nullptr) {
 			program.m_ShaderSpecificPixelConstants[constantIndex] = g_pGL->GetUniformLocation(
 					programGLHandle, shaderSpecificConstants[constantIndex]);
 		}
@@ -388,7 +388,7 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t programHand
 	if (pixelSamplerCount > 0) {
 		for (unsigned int samplerIndex = 0; samplerIndex < CShaderAPIGLES2::MAX_SAMPLERS; ++samplerIndex) {
 			const char *samplerName = samplerNames[samplerIndex];
-			if (samplerName != NULL) {
+			if (samplerName != nullptr) {
 				int samplerLocation = g_pGL->GetUniformLocation(programGLHandle, samplerName);
 				if (samplerLocation >= 0) {
 					g_pGL->Uniform1i(samplerLocation, samplerIndex);
@@ -400,7 +400,7 @@ bool CShaderManager::CompileVertexPixelProgram(ShaderProgramHandle_t programHand
 	if (vertexProvider->GetSamplers(vertexStaticIndex, vertexDynamicIndex, samplerNames) > 0) {
 		for (unsigned int samplerIndex = 0; samplerIndex < CShaderAPIGLES2::MAX_SAMPLERS; ++samplerIndex) {
 			const char *samplerName = samplerNames[samplerIndex];
-			if (samplerName != NULL) {
+			if (samplerName != nullptr) {
 				int samplerLocation = g_pGL->GetUniformLocation(programGLHandle, samplerName);
 				if (samplerLocation >= 0) {
 					g_pGL->Uniform1i(samplerLocation, pixelSamplerCount + samplerIndex);
@@ -419,7 +419,7 @@ bool CShaderManager::IsStaticComboAlphaTested(ShaderProgramStaticComboHandle_t c
 
 IShaderBuffer *CShaderAPIGLES2::CompileShader(const char *pProgram, size_t nBufLen, const char *pShaderVersion) {
 	AssertMsg(0, "Can't compile Direct3D shaders with an OpenGL ES ShaderAPI.");
-	return NULL;
+	return nullptr;
 }
 
 VertexShaderHandle_t CShaderAPIGLES2::CreateVertexShader(IShaderBuffer *pShaderBuffer) {

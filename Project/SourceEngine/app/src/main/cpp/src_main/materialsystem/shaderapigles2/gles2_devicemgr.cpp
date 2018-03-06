@@ -27,24 +27,24 @@ CShaderDeviceMgrBase() {
 static CreateInterfaceFn s_TempFactory;
 
 void *ShaderDeviceFactory(const char *name, int *returnCode) {
-	if (returnCode != NULL) {
+	if (returnCode != nullptr) {
 		*returnCode = IFACE_OK;
 	}
 
 	void *interface = s_TempFactory(name, returnCode);
-	if (interface != NULL) {
+	if (interface != nullptr) {
 		return interface;
 	}
 
 	interface = Sys_GetFactoryThis()(name, returnCode);
-	if (interface != NULL) {
+	if (interface != nullptr) {
 		return interface;
 	}
 
-	if (returnCode != NULL) {
+	if (returnCode != nullptr) {
 		*returnCode = IFACE_FAILED;
 	}
-	return NULL;
+	return nullptr;
 }
 
 bool CShaderDeviceMgrBase::Connect(CreateInterfaceFn factory) {
@@ -55,11 +55,11 @@ bool CShaderDeviceMgrBase::Connect(CreateInterfaceFn factory) {
 	ConnectTier1Libraries(&actualFactory, 1);
 	InitShaderAPICVars();
 	ConnectTier3Libraries(&actualFactory, 1);
-	g_pShaderUtil = (IShaderUtil *) ShaderDeviceFactory(SHADER_UTIL_INTERFACE_VERSION, NULL);
+	g_pShaderUtil = (IShaderUtil *) ShaderDeviceFactory(SHADER_UTIL_INTERFACE_VERSION, nullptr);
 	g_pShaderDeviceMgr = this;
-	s_TempFactory = NULL;
+	s_TempFactory = nullptr;
 
-	if (g_pShaderUtil == NULL) {
+	if (g_pShaderUtil == nullptr) {
 		Warning("ShaderAPIGLES2 was unable to access IShaderUtil!\n");
 		return false;
 	}
@@ -69,8 +69,8 @@ bool CShaderDeviceMgrBase::Connect(CreateInterfaceFn factory) {
 }
 
 void CShaderDeviceMgrBase::Disconnect() {
-	g_pShaderDeviceMgr = NULL;
-	g_pShaderUtil = NULL;
+	g_pShaderDeviceMgr = nullptr;
+	g_pShaderUtil = nullptr;
 	DisconnectTier2Libraries();
 	ConVar_Unregister();
 	DisconnectTier1Libraries();
@@ -115,7 +115,7 @@ InitReturnVal_t CShaderDeviceMgrBase::Init() {
 bool CShaderDeviceMgrBase::InitGLES2CoreFunctions() {
 #define LOAD_GLES2_CORE(function) \
 	*((void **) (&(g_pGL->##function))) = GetGLES2CoreFunction("gl"#function); \
-	if (g_pGL->##function == NULL) { \
+	if (g_pGL->##function == nullptr) { \
 		Warning("ERROR: %s not found in libGLESv2.\n", "gl"#function); \
 		return false; \
 	}
@@ -268,13 +268,13 @@ bool CShaderDeviceMgrBase::InitGLES2CoreFunctions() {
 void CShaderDeviceMgrBase::InitGLES2ExtensionsAndGLES3Core() {
 #define LOAD_GLES2_EXTENSION(function, suffix) \
 	*((void **) (&(g_pGL->##function))) = GetGLES2ExtensionFunction("gl"#function#suffix); \
-	if (g_pGL->##function == NULL) { \
+	if (g_pGL->##function == nullptr) { \
 		Warning("ERROR: %s not found by WSI GetProcAddress.\n", "gl"#function#suffix); \
 		extensionLoaded = false; \
 	}
 #define LOAD_GLES3_CORE(function) \
 	*((void **) (&(g_pGL->##function))) = GetGLES3CoreFunction("gl"#function); \
-	if (g_pGL->##function == NULL) { \
+	if (g_pGL->##function == nullptr) { \
 		Warning("ERROR: %s not found in libGLESv3.\n", "gl"#function); \
 		return false; \
 	}
@@ -324,7 +324,7 @@ bool CShaderDeviceMgrBase::GetRecommendedConfigurationInfo(int nAdapter, int nDX
 }
 
 CreateInterfaceFn CShaderDeviceMgrBase::SetMode(void *hWnd, int nAdapter, const ShaderDeviceInfo_t &mode) {
-	return (g_pShaderAPI->SetMode(hWnd, nAdapter, mode) ? ShaderInterfaceFactory : NULL);
+	return (g_pShaderAPI->SetMode(hWnd, nAdapter, mode) ? ShaderInterfaceFactory : nullptr);
 }
 
 // EGL doesn't provide info about modes, and on Android, the size is obtained from a window.
@@ -347,7 +347,7 @@ void CShaderDeviceMgrBase::GetCurrentModeInfo(ShaderDisplayMode_t *pInfo, int nA
 }
 
 void *CShaderDeviceMgrBase::ShaderInterfaceFactory(const char *pInterfaceName, int *pReturnCode) {
-	if (pReturnCode != NULL) {
+	if (pReturnCode != nullptr) {
 		*pReturnCode = IFACE_OK;
 	}
 	if (Q_stricmp(pInterfaceName, SHADER_DEVICE_INTERFACE_VERSION) == 0) {
@@ -360,8 +360,8 @@ void *CShaderDeviceMgrBase::ShaderInterfaceFactory(const char *pInterfaceName, i
 		return static_cast<IShaderShadow *>(g_pShaderShadow);
 	}
 
-	if (pReturnCode != NULL) {
+	if (pReturnCode != nullptr) {
 		*pReturnCode = IFACE_FAILED;
 	}
-	return NULL;
+	return nullptr;
 }
