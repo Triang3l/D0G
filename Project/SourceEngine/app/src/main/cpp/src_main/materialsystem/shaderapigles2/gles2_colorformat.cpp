@@ -93,6 +93,28 @@ GLESImageFormat_t CShaderAPIGLES2::ImageFormatToGLES(ImageFormat format) const {
 			return GLESImageFormat_t(GL_RGBA, GL_RGBA32F, GL_FLOAT);
 		}
 		return GLESImageFormat_t(GL_RGBA, GL_FLOAT);
+	case IMAGE_FORMAT_GLES_D16_RB:
+		return GLESImageFormat_t(GL_DEPTH_COMPONENT16, GL_UNSIGNED_SHORT);
+	case IMAGE_FORMAT_GLES_D16_TEX:
+		// GL_OES_depth_texture.
+		return GLESImageFormat_t(GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
+	case IMAGE_FORMAT_GLES_D16_NONLINEAR_RB:
+		// GL_NV_depth_nonlinear, fall back to GLES_D16_RB.
+	case IMAGE_FORMAT_GLES_D16_NONLINEAR_TEX:
+		// GL_NV_depth_nonlinear and GL_OES_depth_texture, fall back to GLES_D16_TEX.
+		return GLESImageFormat_t(GL_DEPTH_COMPONENT16_NONLINEAR_NV, GL_UNSIGNED_SHORT);
+	case IMAGE_FORMAT_GLES_D24_RB:
+		// GL_OES_depth24 or GLES3, fall back to GLES_D16_RB.
+		return GLESImageFormat_t(GL_DEPTH_COMPONENT24_OES, GL_UNSIGNED_INT);
+	case IMAGE_FORMAT_GLES_D24_TEX:
+		// GL_OES_depth24 and GL_OES_depth_texture or GLES3, fall back to GLES_D16_TEX.
+		return GLESImageFormat_t(GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
+	case IMAGE_FORMAT_GLES_DST24_RB:
+		// GL_OES_packed_depth_stencil or GLES3, try to fall back to GLES_D24_RB.
+		return GLESImageFormat_t(GL_DEPTH24_STENCIL8_OES, GL_UNSIGNED_INT_24_8_OES);
+	case IMAGE_FORMAT_GLES_DST24_TEX:
+		// GL_OES_packed_depth_stencil and GL_OES_depth_texture or GLES3, try to fall back to GLES_D24_TEX.
+		return GLESImageFormat_t(GL_DEPTH_STENCIL_OES, GL_UNSIGNED_INT_24_8_OES);
 	}
 	AssertMsg(0, "Attempted to convert an unsupported format to OpenGL ES enumerations.");
 	return GLESImageFormat_t(0, 0);
