@@ -95,6 +95,7 @@ public:
 	void OnGLESContextShutdown();
 
 	GLESColorFormat_t ImageFormatToGLES(ImageFormat format) const;
+	ImageFormat FindNearestSupportedImageFormat(ImageFormat format) const;
 
 private:
 	int m_BackBufferWidth, m_BackBufferHeight;

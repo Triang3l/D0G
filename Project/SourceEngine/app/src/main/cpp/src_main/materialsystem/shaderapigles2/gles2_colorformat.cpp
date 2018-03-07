@@ -18,10 +18,8 @@ GLESImageFormat_t CShaderAPIGLES2::ImageFormatToGLES(ImageFormat format) const {
 	// case IMAGE_FORMAT_ABGR8888:
 		// Fall back to RGBA8888.
 	case IMAGE_FORMAT_RGB888:
-	case IMAGE_FORMAT_RGB888_BLUESCREEN:
 		return GLESImageFormat_t(GL_RGB, GL_UNSIGNED_BYTE);
 	case IMAGE_FORMAT_BGR888:
-	case IMAGE_FORMAT_BGR888_BLUESCREEN:
 		// GL_EXT_bgra, fall back to RGB888.
 		return GLESImageFormat_t(GL_BGR_EXT, GL_UNSIGNED_BYTE);
 	// case IMAGE_FORMAT_RGB565:
@@ -31,9 +29,13 @@ GLESImageFormat_t CShaderAPIGLES2::ImageFormatToGLES(ImageFormat format) const {
 	case IMAGE_FORMAT_IA88:
 		return GLESImageFormat_t(GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE);
 	// case IMAGE_FORMAT_P8:
-		// Fall back to I8 or A8.
+		// Fall back to I8.
 	case IMAGE_FORMAT_A8:
 		return GLESImageFormat_t(GL_ALPHA, GL_UNSIGNED_BYTE);
+	// case IMAGE_FORMAT_RGB888_BLUESCREEN:
+		// Fall back to RGBA8888.
+	// case IMAGE_FORMAT_BGR888_BLUESCREEN:
+		// Fall back to RGBA8888.
 	// case IMAGE_FORMAT_ARGB8888:
 		// Fall back to RGBA8888.
 	case IMAGE_FORMAT_BGRA8888:
@@ -96,26 +98,99 @@ GLESImageFormat_t CShaderAPIGLES2::ImageFormatToGLES(ImageFormat format) const {
 	case IMAGE_FORMAT_GLES_D16_RB:
 		return GLESImageFormat_t(GL_DEPTH_COMPONENT16, GL_UNSIGNED_SHORT);
 	case IMAGE_FORMAT_GLES_D16_TEX:
-		// GL_OES_depth_texture.
+		// GL_OES_depth_texture, fall back to GLES_D16_RB.
 		return GLESImageFormat_t(GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT);
 	case IMAGE_FORMAT_GLES_D16_NONLINEAR_RB:
 		// GL_NV_depth_nonlinear, fall back to GLES_D16_RB.
 	case IMAGE_FORMAT_GLES_D16_NONLINEAR_TEX:
-		// GL_NV_depth_nonlinear and GL_OES_depth_texture, fall back to GLES_D16_TEX.
+		// GL_NV_depth_nonlinear and GL_OES_depth_texture, try to fall back to GLES_D16_TEX or GLES_D16_NONLINEAR_RB.
 		return GLESImageFormat_t(GL_DEPTH_COMPONENT16_NONLINEAR_NV, GL_UNSIGNED_SHORT);
 	case IMAGE_FORMAT_GLES_D24_RB:
-		// GL_OES_depth24 or GLES3, fall back to GLES_D16_RB.
+		// GL_OES_depth24 or GLES3, try to fall back to GLES_D16_NONLINEAR_RB.
 		return GLESImageFormat_t(GL_DEPTH_COMPONENT24_OES, GL_UNSIGNED_INT);
 	case IMAGE_FORMAT_GLES_D24_TEX:
-		// GL_OES_depth24 and GL_OES_depth_texture or GLES3, fall back to GLES_D16_TEX.
+		// GL_OES_depth24 and GL_OES_depth_texture or GLES3, try to fall back to GLES_D16_NONLINEAR_TEX or GLES_D24_RB.
 		return GLESImageFormat_t(GL_DEPTH_COMPONENT, GL_UNSIGNED_INT);
 	case IMAGE_FORMAT_GLES_DST24_RB:
 		// GL_OES_packed_depth_stencil or GLES3, try to fall back to GLES_D24_RB.
 		return GLESImageFormat_t(GL_DEPTH24_STENCIL8_OES, GL_UNSIGNED_INT_24_8_OES);
 	case IMAGE_FORMAT_GLES_DST24_TEX:
-		// GL_OES_packed_depth_stencil and GL_OES_depth_texture or GLES3, try to fall back to GLES_D24_TEX.
+		// GL_OES_packed_depth_stencil and GL_OES_depth_texture or GLES3, try to fall back to GLES_D24_TEX or GLES_DST24_RB.
 		return GLESImageFormat_t(GL_DEPTH_STENCIL_OES, GL_UNSIGNED_INT_24_8_OES);
 	}
 	AssertMsg(0, "Attempted to convert an unsupported format to OpenGL ES enumerations.");
 	return GLESImageFormat_t(0, 0);
 };
+
+ImageFormat FindNearestSupportedImageFormat(ImageFormat format) const {
+	const HardwareCaps_t &caps = g_pHardwareConfig->Caps();
+	switch (format) {
+	case IMAGE_FORMAT_RGBA8888:
+	case IMAGE_FORMAT_RGB888:
+	case IMAGE_FORMAT_I8:
+	case IMAGE_FORMAT_IA88:
+	case IMAGE_FORMAT_A8:
+	case IMAGE_FORMAT_BGR565:
+	case IMAGE_FORMAT_BGRX5551:
+	case IMAGE_FORMAT_BGRA4444:
+	case IMAGE_FORMAT_BGRA5551:
+	case IMAGE_FORMAT_GLES_D16_RB:
+		return format;
+	case IMAGE_FORMAT_ABGR8888:
+	case IMAGE_FORMAT_RGB888_BLUESCREEN:
+	case IMAGE_FORMAT_BGR888_BLUESCREEN:
+	case IMAGE_FORMAT_ARGB8888:
+	case IMAGE_FORMAT_BGRX8888:
+		return IMAGE_FORMAT_RGBA8888;
+	case IMAGE_FORMAT_BGR888:
+		return (caps.m_Ext_BGRA ? format : IMAGE_FORMAT_RGB888);
+	case IMAGE_FORMAT_RGB565:
+		return IMAGE_FORMAT_BGR565;
+	case IMAGE_FORMAT_P8:
+		return IMAGE_FORMAT_I8;
+	case IMAGE_FORMAT_BGRA8888:
+		return ((caps.m_Ext_BGRA || caps.m_Ext_TextureFormatBGRA8888) ? format : IMAGE_FORMAT_RGBA8888);
+	case IMAGE_FORMAT_DXT1:
+	case IMAGE_FORMAT_DXT3:
+	case IMAGE_FORMAT_DXT5:
+	case IMAGE_FORMAT_DXT1_ONEBITALPHA:
+		return (caps.m_Ext_TextureCompressionS3TC ? format : IMAGE_FORMAT_RGBA8888);
+	case IMAGE_FORMAT_UV88:
+		return (caps.m_GLESVersion >= 300 ? format : IMAGE_FORMAT_IA88);
+	case IMAGE_FORMAT_UVWQ8888:
+	case IMAGE_FORMAT_UVLX8888:
+		return (caps.m_GLESVersion >= 300 ? format : IMAGE_FORMAT_RGBA8888);
+	case IMAGE_FORMAT_RGBA16161616F:
+		return (caps.m_Ext_TextureHalfFloat ? format : IMAGE_FORMAT_RGBA8888);
+	case IMAGE_FORMAT_R32F:
+		return (caps.m_Ext_TextureFloat ? format : IMAGE_FORMAT_I8);
+	case IMAGE_FORMAT_RGB323232F:
+	case IMAGE_FORMAT_RGBA32323232F:
+		return (caps.m_Ext_TextureFloat ? format : IMAGE_FORMAT_RGBA8888);
+	// Falling back from a texture to a renderbuffer is worse than falling back to a lower bit depth.
+	case IMAGE_FORMAT_GLES_D16_TEX:
+		return (caps.m_Ext_DepthTexture ? format : IMAGE_FORMAT_GLES_D16_RB);
+	case IMAGE_FORMAT_GLES_D16_NONLINEAR_RB:
+		return (caps.m_Ext_DepthNonlinear ? format : IMAGE_FORMAT_GLES_D16_RB);
+	case IMAGE_FORMAT_GLES_D16_NONLINEAR_TEX:
+		if (!caps.m_Ext_DepthNonlinear) {
+			return FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D16_TEX);
+		}
+		return (caps.m_Ext_DepthTexture ? format : IMAGE_FORMAT_GLES_D16_NONLINEAR_RB);
+	case IMAGE_FORMAT_GLES_D24_RB:
+		return (caps.m_Ext_Depth24 ? format : FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D16_NONLINEAR_RB));
+	case IMAGE_FORMAT_GLES_D24_TEX:
+		if (!caps.m_Ext_Depth24) {
+			return FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D16_NONLINEAR_TEX);
+		}
+		return (caps.m_Ext_DepthTexture ? format : IMAGE_FORMAT_GLES_D24_RB);
+	case IMAGE_FORMAT_GLES_DST24_RB:
+		return (caps.m_Ext_PackedDepthStencil ? format : FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D24_RB));
+	case IMAGE_FORMAT_GLES_DST24_TEX:
+		if (!caps.m_Ext_PackedDepthStencil) {
+			return FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D24_TEX);
+		}
+		return (caps.m_Ext_DepthTexture ? format : IMAGE_FORMAT_GLES_DST24_RB);
+	}
+	return IMAGE_FORMAT_UNKNOWN;
+}

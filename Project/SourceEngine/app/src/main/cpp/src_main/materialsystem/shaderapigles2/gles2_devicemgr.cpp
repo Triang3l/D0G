@@ -55,7 +55,7 @@ bool CShaderDeviceMgrBase::Connect(CreateInterfaceFn factory) {
 	ConnectTier1Libraries(&actualFactory, 1);
 	InitShaderAPICVars();
 	ConnectTier3Libraries(&actualFactory, 1);
-	g_pShaderUtil = (IShaderUtil *) ShaderDeviceFactory(SHADER_UTIL_INTERFACE_VERSION, nullptr);
+	g_pShaderUtil = reinterpret_cast<IShaderUtil *>(ShaderDeviceFactory(SHADER_UTIL_INTERFACE_VERSION, nullptr));
 	g_pShaderDeviceMgr = this;
 	s_TempFactory = nullptr;
 

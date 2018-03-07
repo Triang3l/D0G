@@ -292,7 +292,7 @@ bool CShaderDeviceMgrEGL::ResizeCurrentGLESSurface(int width, int height) {
 	if (m_EGLSurfaceWindow == (EGLNativeWindowType) nullptr) {
 		return true;
 	}
-	return UpdateGLESSurface((void *) m_EGLSurfaceWindow, width, height);
+	return UpdateGLESSurface(reinterpet_cast<void *>(m_EGLSurfaceWindow), width, height);
 }
 
 bool CShaderDeviceMgrEGL::IsGLESContextActive() const {

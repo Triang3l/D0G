@@ -37,7 +37,7 @@ void CShaderAPIGLES2::CreateTextureHandles(ShaderAPITextureHandle_t *handles, in
 
 	while (count > 0 && m_TexturesDeleted.Count() > 0) {
 		*(handles++) = m_TexturesDeleted.Tail();
-		m_TexturesDeleted.FastRemove(m_TexturesDeleted.Count() - 1);
+		m_TexturesDeleted.Remove(m_TexturesDeleted.Count() - 1);
 		--count;
 	}
 

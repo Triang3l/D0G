@@ -20,4 +20,9 @@ struct GLESImageFormat_t {
 			m_Format(format), m_InternalFormat(format), m_Type(type) {}
 };
 
+inline bool IsImageFormatRenderbuffer(ImageFormat format) {
+	return format == IMAGE_FORMAT_GLES_D16_RB || format == IMAGE_FORMAT_GLES_D16_NONLINEAR_RB ||
+			format == IMAGE_FORMAT_GLES_D24_RB || format == IMAGE_FORMAT_GLES_DST24_RB;
+}
+
 #endif
