@@ -88,7 +88,7 @@ struct GLES2Funcs_t {
 	void (GL_APIENTRY *BindRenderbuffer)(GLenum target, GLuint renderbuffer);
 	void (GL_APIENTRY *BindTexture)(GLenum target, GLuint texture);
 	void (GL_APIENTRY *BlendColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-	void (GL_APIENTRY *BlendEquation)( GLenum mode );
+	void (GL_APIENTRY *BlendEquation)(GLenum mode);
 	void (GL_APIENTRY *BlendEquationSeparate)(GLenum modeRGB, GLenum modeAlpha);
 	void (GL_APIENTRY *BlendFunc)(GLenum sfactor, GLenum dfactor);
 	void (GL_APIENTRY *BlendFuncSeparate)(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);

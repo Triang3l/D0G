@@ -15,7 +15,8 @@ ShaderAPITextureHandle_t CShaderAPIGLES2::CreateTexture(int width, int height, i
 	return handle;
 }
 
-void CShaderAPIGLES2::CreateTextures(ShaderAPITextureHandle_t *pHandles, int count, int width, int height, int depth,
+void CShaderAPIGLES2::CreateTextures(ShaderAPITextureHandle_t *pHandles,
+		int count, int width, int height, int depth,
 		ImageFormat dstImageFormat, int numMipLevels, int numCopies, int flags,
 		const char *pDebugName, const char *pTextureGroupName) {
 	if (depth <= 0) {

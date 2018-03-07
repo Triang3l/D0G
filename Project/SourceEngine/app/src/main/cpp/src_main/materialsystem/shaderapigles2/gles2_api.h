@@ -84,7 +84,8 @@ public:
 			ImageFormat dstImageFormat, int numMipLevels, int numCopies, int flags,
 			const char *pDebugName, const char *pTextureGroupName);
 
-	virtual void CreateTextures(ShaderAPITextureHandle_t *pHandles, int count, int width, int height, int depth,
+	virtual void CreateTextures(ShaderAPITextureHandle_t *pHandles,
+			int count, int width, int height, int depth,
 			ImageFormat dstImageFormat, int numMipLevels, int numCopies, int flags,
 			const char *pDebugName, const char *pTextureGroupName);
 
