@@ -100,11 +100,13 @@ void CHardwareConfig::SetupHardwareCaps() {
 
 	if (m_Caps.m_GLESVersion >= 300) {
 		m_Caps.m_MaxTextureSize = 2048;
+		m_Caps.m_MaxTextureSizeCubemap = 2048;
 		m_Caps.m_MaxTextureSize3D = 256;
 		m_Caps.m_NumVertexShaderConstants = 256;
 		m_Caps.m_NumPixelShaderConstants = 224;
 	} else {
 		m_Caps.m_MaxTextureSize = 64;
+		m_Caps.m_MaxTextureSizeCubemap = 16;
 		m_Caps.m_MaxTextureSize3D = 0;
 		m_Caps.m_NumVertexShaderConstants = 128;
 		m_Caps.m_NumPixelShaderConstants = 16;
@@ -115,6 +117,7 @@ void CHardwareConfig::SetupHardwareCaps() {
 		g_pGL->GetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &m_Caps.m_MaxAnisotropy);
 	}
 	g_pGL->GetIntegerv(GL_MAX_TEXTURE_SIZE, &m_Caps.m_MaxTextureSize);
+	g_pGL->GetIntegerv(GL_MAX_CUBE_MAP_TEXTURE_SIZE, &m_Caps.m_MaxTextureSizeCubemap);
 	if (m_Caps.m_Ext_Texture3D) {
 		g_pGL->GetIntegerv(GL_MAX_3D_TEXTURE_SIZE_OES, &m_Caps.m_MaxTextureSize3D);
 	}
@@ -328,4 +331,8 @@ bool CHardwareConfig::ActuallySupportsPixelShaders_2_b() const {
 
 bool CHardwareConfig::SupportsHDRMode(HDRType_t nHDRMode) const {
 	return (nHDRMode == GetHardwareHDRType() || nHDRMode == HDR_TYPE_NONE);
+}
+
+int CHardwareConfig::MaxCubemapSize() const {
+	return m_Caps.m_MaxTextureSizeCubemap;
 }

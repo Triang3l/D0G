@@ -10,8 +10,12 @@ struct HardwareCaps_t : public MaterialAdapterInfo_t {
 	int m_GLESVersion; // 200, 300, 310...
 
 	int m_MaxAnisotropy;
+
 	int m_MaxTextureSize;
+	int m_MaxTextureSizeCubemap;
 	int m_MaxTextureSize3D;
+	// No devices with max renderbuffer size below max texture size, so ignoring it for simplicity.
+
 	int m_NumVertexShaderConstants;
 	int m_NumPixelShaderConstants;
 
@@ -116,6 +120,7 @@ public:
 	virtual int MaxHWMorphBatchCount() const;
 	virtual bool ActuallySupportsPixelShaders_2_b() const;
 	virtual bool SupportsHDRMode(HDRType_t nHDRMode) const;
+	virtual int MaxCubemapSize() const;
 
 	// virtual bool GetHDREnabled() const { return m_bHDREnabled; }
 	// virtual void SetHDREnabled(bool bEnable) { m_bHDREnabled = bEnable; }
