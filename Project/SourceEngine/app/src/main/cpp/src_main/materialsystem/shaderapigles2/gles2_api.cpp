@@ -22,6 +22,7 @@ CShaderAPIGLES2::CShaderAPIGLES2() :
 	for (int sampler = 0; sampler < MAX_SAMPLERS; ++sampler) {
 		m_TexturesBound[sampler] = INVALID_SHADERAPI_TEXTURE_HANDLE;
 	}
+	m_TextureActive = SHADER_SAMPLER0;
 }
 
 void CShaderAPIGLES2::SetRasterState(const ShaderRasterState_t &state) {

@@ -14,6 +14,7 @@
 extern IShaderUtil *g_pShaderUtil;
 
 struct Texture_t {
+	unsigned int m_Target;
 	unsigned int m_GLTexture;
 	int m_WrapU, m_WrapV, m_WrapW;
 	int m_MagFilter, m_MinFilter;
@@ -83,6 +84,10 @@ public:
 	virtual ShaderAPITextureHandle_t CreateTexture(int width, int height, int depth,
 			ImageFormat dstImageFormat, int numMipLevels, int numCopies, int flags,
 			const char *pDebugName, const char *pTextureGroupName);
+
+	virtual void BindTexture(Sampler_t sampler, ShaderAPITextureHandle_t textureHandle);
+
+	virtual void BindVertexTexture(VertexTextureSampler_t nSampler, ShaderAPITextureHandle_t textureHandle);
 
 	virtual void CreateTextures(ShaderAPITextureHandle_t *pHandles,
 			int count, int width, int height, int depth,

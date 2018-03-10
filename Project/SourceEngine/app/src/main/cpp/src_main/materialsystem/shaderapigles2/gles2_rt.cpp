@@ -45,13 +45,17 @@ void CShaderAPIGLES2::SetViewports(int nCount, const ShaderViewport_t *pViewport
 		m_Viewport.m_nTopLeftY = pViewports[0].m_nTopLeftY;
 		m_Viewport.m_nWidth = pViewports[0].m_nWidth;
 		m_Viewport.m_nHeight = pViewports[0].m_nHeight;
-		g_pGL->Viewport(m_Viewport.m_nTopLeftX, m_Viewport.m_nTopLeftY, m_Viewport.m_nWidth, m_Viewport.m_nHeight);
+		if (!IsDeactivated()) {
+			g_pGL->Viewport(m_Viewport.m_nTopLeftX, m_Viewport.m_nTopLeftY, m_Viewport.m_nWidth, m_Viewport.m_nHeight);
+		}
 	}
 
 	if (pViewports[0].m_flMinZ != m_Viewport.m_flMinZ || pViewports[0].m_flMaxZ != m_Viewport.m_flMaxZ) {
 		m_Viewport.m_flMinZ = pViewports[0].m_flMinZ;
 		m_Viewport.m_flMaxZ = pViewports[0].m_flMaxZ;
-		g_pGL->DepthRangef(m_Viewport.m_flMinZ, m_Viewport.m_flMaxZ);
+		if (!IsDeactivated()) {
+			g_pGL->DepthRangef(m_Viewport.m_flMinZ, m_Viewport.m_flMaxZ);
+		}
 	}
 }
 
