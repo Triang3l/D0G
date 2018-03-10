@@ -20,7 +20,9 @@ CShaderAPIGLES2::CShaderAPIGLES2() :
 	m_Viewport.Init(0, 0, 1, 1, 0.0f, 1.0f);
 
 	for (int sampler = 0; sampler < MAX_SAMPLERS; ++sampler) {
-		m_TexturesBound[sampler] = INVALID_SHADERAPI_TEXTURE_HANDLE;
+		TextureBinding_t &binding = m_TexturesBound[sampler];
+		binding.m_Handle = INVALID_SHADERAPI_TEXTURE_HANDLE;
+		binding.m_Copy = 0;
 	}
 	m_TextureActive = SHADER_SAMPLER0;
 }

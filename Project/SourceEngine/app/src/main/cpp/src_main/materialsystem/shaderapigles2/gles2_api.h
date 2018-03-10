@@ -14,10 +14,20 @@
 extern IShaderUtil *g_pShaderUtil;
 
 struct Texture_t {
-	unsigned int m_Target;
-	unsigned int m_GLTexture;
-	int m_WrapU, m_WrapV, m_WrapW;
-	int m_MagFilter, m_MinFilter;
+	/* GLenum */ unsigned int m_Target;
+
+	unsigned int m_CopyCount, m_CopyCurrent;
+	union {
+		// These can be either texture or renderbuffer names, depending on the target.
+		/* GLuint */ unsigned int m_GLTexture; // Single copy.
+		/* GLuint */ unsigned int *m_GLTextures; // Multiple copies.
+	}
+	inline /* GLuint */ unsigned int GetGLTexture() const {
+		return (m_CopyCount > 1 ? m_GLTextures[m_CopyCurrent] : m_GLTexture);
+	}
+
+	unsigned int m_WrapU, m_WrapV, m_WrapW;
+	unsigned int m_MagFilter, m_MinFilter;
 };
 
 class CShaderAPIGLES2 : public IShaderDevice, public IShaderAPI {
@@ -113,7 +123,11 @@ private:
 
 	CUtlFixedLinkedList<Texture_t> m_Textures;
 	CUtlVector<ShaderAPITextureHandle_t> m_TexturesDeleted;
-	ShaderAPITextureHandle_t m_TexturesBound[MAX_SAMPLERS];
+	struct TextureBinding_t {
+		ShaderAPITextureHandle_t m_Handle;
+		unsigned int m_Copy;
+	};
+	TextureBinding_t m_TexturesBound[MAX_SAMPLERS];
 	Sampler_t m_TextureActive;
 
 	void CreateTextureHandles(ShaderAPITextureHandle_t *handles, int count);

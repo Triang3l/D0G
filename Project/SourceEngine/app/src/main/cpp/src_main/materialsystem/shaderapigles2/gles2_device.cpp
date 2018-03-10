@@ -41,7 +41,9 @@ void CShaderAPIGLES2::OnGLESContextInit(bool restore) {
 	g_pGL->DepthRangef(m_Viewport.m_flMinZ, m_Viewport.m_flMaxZ);
 
 	for (int sampler = 0; sampler < MAX_SAMPLERS; ++sampler) {
-		m_TexturesBound[sampler] = INVALID_SHADERAPI_TEXTURE_HANDLE;
+		TextureBinding_t &binding = m_TexturesBound[sampler];
+		binding.m_Handle = INVALID_SHADERAPI_TEXTURE_HANDLE;
+		binding.m_Copy = 0;
 	}
 	m_TextureActive = SHADER_SAMPLER0;
 }

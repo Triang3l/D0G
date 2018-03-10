@@ -55,28 +55,34 @@ void CShaderAPIGLES2::BindTexture(Sampler_t sampler, ShaderAPITextureHandle_t te
 	if (!IsUsingGraphics()) {
 		return;
 	}
-	if (m_TexturesBound[sampler] == textureHandle) {
-		return;
-	}
-	GLenum textureTarget = GL_TEXTURE_2D;
-	GLuint textureGLName = 0;
-	if (textureHandle != INVALID_SHADERAPI_TEXTURE_HANDLE) {
-		Texture_t &texture = m_Textures[textureHandle];
-		textureTarget = texture.m_Target;
-		Assert(textureTarget != GL_RENDERBUFFER);
-		if (textureTarget == GL_RENDERBUFFER) {
+	TextureBinding_t &binding = m_TexturesBound[sampler];
+	if (textureHandle == INVALID_SHADERAPI_TEXTURE_HANDLE) {
+		if (binding.m_Handle == INVALID_SHADERAPI_TEXTURE_HANDLE) {
 			return;
 		}
-		textureGLName = texture.m_GLTexture;
+		if (m_TextureActive != sampler) {
+			g_pGL->ActiveTexture(GL_TEXTURE0 + sampler);
+			m_TextureActive = sampler;
+		}
+		g_pGL->BindTexture(GL_TEXTURE_2D, 0);
+		binding.m_Handle = INVALID_SHADERAPI_TEXTURE_HANDLE;
+		binding.m_Copy = 0;
+	} else {
+		const Texture_t &texture = m_Textures[textureHandle];
+		unsigned int copy = texture.m_CopyCurrent;
+		if (binding.m_Handle == textureHandle && binding.m_Copy == copy) {
+			return;
+		}
+		if (m_TextureActive != sampler) {
+			g_pGL->ActiveTexture(GL_TEXTURE0 + sampler);
+			m_TextureActive = sampler;
+		}
+		g_pGL->BindTexture(texture.m_Target, texture.GetGLTexture());
+		binding.m_Handle = textureHandle;
+		binding.m_Copy = copy;
 	}
-	if (m_TextureActive != sampler) {
-		m_TextureActive = sampler;
-		g_pGL->ActiveTexture(GL_TEXTURE0 + sampler);
-	}
-	m_TexturesBound[sampler] = textureHandle;
-	g_pGL->BindTexture(textureTarget, textureGLName);
 }
 
 void CShaderAPIGLES2::BindVertexTexture(VertexTextureSampler_t nSampler, ShaderAPITextureHandle_t textureHandle) {
-	return BindTexture(nSampler);
+	return BindTexture(nSampler, textureHandle);
 }
