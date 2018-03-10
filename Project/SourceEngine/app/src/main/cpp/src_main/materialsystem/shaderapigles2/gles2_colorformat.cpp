@@ -122,7 +122,7 @@ GLESImageFormat_t CShaderAPIGLES2::ImageFormatToGLES(ImageFormat format) const {
 	return GLESImageFormat_t(0, 0);
 };
 
-ImageFormat FindNearestSupportedImageFormat(ImageFormat format) const {
+ImageFormat CShaderAPIGLES2::FindNearestSupportedImageFormat(ImageFormat format) const {
 	const HardwareCaps_t &caps = g_pHardwareConfig->Caps();
 	switch (format) {
 	case IMAGE_FORMAT_RGBA8888:
