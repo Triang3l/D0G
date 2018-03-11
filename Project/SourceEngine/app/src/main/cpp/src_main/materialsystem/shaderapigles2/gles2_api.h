@@ -16,7 +16,7 @@ extern IShaderUtil *g_pShaderUtil;
 struct Texture_t {
 	/* GLenum */ unsigned int m_Target;
 
-	unsigned int m_CopyCount, m_CopyCurrent;
+	int m_CopyCount, m_CopyCurrent;
 	union {
 		// These can be either texture or renderbuffer names, depending on the target.
 		/* GLuint */ unsigned int m_GLTexture; // Single copy.
@@ -26,8 +26,10 @@ struct Texture_t {
 		return (m_CopyCount > 1 ? m_GLTextures[m_CopyCurrent] : m_GLTexture);
 	}
 
-	unsigned int m_WrapU, m_WrapV, m_WrapW;
-	unsigned int m_MagFilter, m_MinFilter;
+	int m_Width, m_Height, m_Depth, m_MipLevels;
+
+	/* GLenum */ unsigned int m_WrapS, m_WrapT, m_WrapR;
+	/* GLenum */ unsigned int m_FilterMin, m_FilterMag;
 };
 
 class CShaderAPIGLES2 : public IShaderDevice, public IShaderAPI {
@@ -87,13 +89,16 @@ public:
 	virtual bool UsesVertexAndPixelShaders(StateSnapshot_t id) const;
 	virtual bool IsDepthWriteEnabled(StateSnapshot_t id) const;
 
-	// virtual ImageFormat GetNearestSupportedFormat(ImageFormat fmt) const;
+	virtual ImageFormat GetNearestSupportedFormat(ImageFormat fmt) const;
+	virtual ImageFormat GetNearestRenderTargetFormat(ImageFormat fmt) const;
 
 	virtual bool DoRenderTargetsNeedSeparateDepthBuffer() const;
 
 	virtual ShaderAPITextureHandle_t CreateTexture(int width, int height, int depth,
 			ImageFormat dstImageFormat, int numMipLevels, int numCopies, int flags,
 			const char *pDebugName, const char *pTextureGroupName);
+
+	virtual bool IsTexture(ShaderAPITextureHandle_t textureHandle);
 
 	virtual void BindTexture(Sampler_t sampler, ShaderAPITextureHandle_t textureHandle);
 
@@ -110,7 +115,6 @@ public:
 	void OnGLESContextShutdown();
 
 	GLESColorFormat_t ImageFormatToGLES(ImageFormat format) const;
-	ImageFormat FindNearestSupportedImageFormat(ImageFormat format) const;
 
 private:
 	int m_BackBufferWidth, m_BackBufferHeight;

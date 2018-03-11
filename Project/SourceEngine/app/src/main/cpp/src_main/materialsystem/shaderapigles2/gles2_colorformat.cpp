@@ -9,10 +9,10 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-GLESImageFormat_t CShaderAPIGLES2::ImageFormatToGLES(ImageFormat format) const {
+GLESImageFormat_t CShaderAPIGLES2::ImageFormatToGLES(ImageFormat fmt) const {
 	// This doesn't care whether it's supported or not.
 	const HardwareCaps_t &caps = g_pHardwareConfig->Caps();
-	switch (format) {
+	switch (fmt) {
 	case IMAGE_FORMAT_RGBA8888:
 		return GLESImageFormat_t(GL_RGBA, GL_UNSIGNED_BYTE);
 	// case IMAGE_FORMAT_ABGR8888:
@@ -122,9 +122,9 @@ GLESImageFormat_t CShaderAPIGLES2::ImageFormatToGLES(ImageFormat format) const {
 	return GLESImageFormat_t(0, 0);
 };
 
-ImageFormat CShaderAPIGLES2::FindNearestSupportedImageFormat(ImageFormat format) const {
+ImageFormat CShaderAPIGLES2::GetNearestSupportedFormat(ImageFormat fmt) const {
 	const HardwareCaps_t &caps = g_pHardwareConfig->Caps();
-	switch (format) {
+	switch (fmt) {
 	case IMAGE_FORMAT_RGBA8888:
 	case IMAGE_FORMAT_RGB888:
 	case IMAGE_FORMAT_I8:
@@ -135,7 +135,7 @@ ImageFormat CShaderAPIGLES2::FindNearestSupportedImageFormat(ImageFormat format)
 	case IMAGE_FORMAT_BGRA4444:
 	case IMAGE_FORMAT_BGRA5551:
 	case IMAGE_FORMAT_GLES_D16_RB:
-		return format;
+		return fmt;
 	case IMAGE_FORMAT_ABGR8888:
 	case IMAGE_FORMAT_RGB888_BLUESCREEN:
 	case IMAGE_FORMAT_BGR888_BLUESCREEN:
@@ -143,54 +143,58 @@ ImageFormat CShaderAPIGLES2::FindNearestSupportedImageFormat(ImageFormat format)
 	case IMAGE_FORMAT_BGRX8888:
 		return IMAGE_FORMAT_RGBA8888;
 	case IMAGE_FORMAT_BGR888:
-		return (caps.m_Ext_BGRA ? format : IMAGE_FORMAT_RGB888);
+		return (caps.m_Ext_BGRA ? fmt : IMAGE_FORMAT_RGB888);
 	case IMAGE_FORMAT_RGB565:
 		return IMAGE_FORMAT_BGR565;
 	case IMAGE_FORMAT_P8:
 		return IMAGE_FORMAT_I8;
 	case IMAGE_FORMAT_BGRA8888:
-		return ((caps.m_Ext_BGRA || caps.m_Ext_TextureFormatBGRA8888) ? format : IMAGE_FORMAT_RGBA8888);
+		return ((caps.m_Ext_BGRA || caps.m_Ext_TextureFormatBGRA8888) ? fmt : IMAGE_FORMAT_RGBA8888);
 	case IMAGE_FORMAT_DXT1:
 	case IMAGE_FORMAT_DXT3:
 	case IMAGE_FORMAT_DXT5:
 	case IMAGE_FORMAT_DXT1_ONEBITALPHA:
-		return (caps.m_Ext_TextureCompressionS3TC ? format : IMAGE_FORMAT_RGBA8888);
+		return (caps.m_Ext_TextureCompressionS3TC ? fmt : IMAGE_FORMAT_RGBA8888);
 	case IMAGE_FORMAT_UV88:
-		return (caps.m_GLESVersion >= 300 ? format : IMAGE_FORMAT_IA88);
+		return (caps.m_GLESVersion >= 300 ? fmt : IMAGE_FORMAT_IA88);
 	case IMAGE_FORMAT_UVWQ8888:
 	case IMAGE_FORMAT_UVLX8888:
-		return (caps.m_GLESVersion >= 300 ? format : IMAGE_FORMAT_RGBA8888);
+		return (caps.m_GLESVersion >= 300 ? fmt : IMAGE_FORMAT_RGBA8888);
 	case IMAGE_FORMAT_RGBA16161616F:
-		return (caps.m_Ext_TextureHalfFloat ? format : IMAGE_FORMAT_RGBA8888);
+		return (caps.m_Ext_TextureHalfFloat ? fmt : IMAGE_FORMAT_RGBA8888);
 	case IMAGE_FORMAT_R32F:
-		return (caps.m_Ext_TextureFloat ? format : IMAGE_FORMAT_I8);
+		return (caps.m_Ext_TextureFloat ? fmt : IMAGE_FORMAT_I8);
 	case IMAGE_FORMAT_RGB323232F:
 	case IMAGE_FORMAT_RGBA32323232F:
-		return (caps.m_Ext_TextureFloat ? format : IMAGE_FORMAT_RGBA8888);
+		return (caps.m_Ext_TextureFloat ? fmt : IMAGE_FORMAT_RGBA8888);
 	// Falling back from a texture to a renderbuffer is worse than falling back to a lower bit depth.
 	case IMAGE_FORMAT_GLES_D16_TEX:
-		return (caps.m_Ext_DepthTexture ? format : IMAGE_FORMAT_GLES_D16_RB);
+		return (caps.m_Ext_DepthTexture ? fmt : IMAGE_FORMAT_GLES_D16_RB);
 	case IMAGE_FORMAT_GLES_D16_NONLINEAR_RB:
-		return (caps.m_Ext_DepthNonlinear ? format : IMAGE_FORMAT_GLES_D16_RB);
+		return (caps.m_Ext_DepthNonlinear ? fmt : IMAGE_FORMAT_GLES_D16_RB);
 	case IMAGE_FORMAT_GLES_D16_NONLINEAR_TEX:
 		if (!caps.m_Ext_DepthNonlinear) {
-			return FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D16_TEX);
+			return GetNearestSupportedFormat(IMAGE_FORMAT_GLES_D16_TEX);
 		}
-		return (caps.m_Ext_DepthTexture ? format : IMAGE_FORMAT_GLES_D16_NONLINEAR_RB);
+		return (caps.m_Ext_DepthTexture ? fmt : IMAGE_FORMAT_GLES_D16_NONLINEAR_RB);
 	case IMAGE_FORMAT_GLES_D24_RB:
-		return (caps.m_Ext_Depth24 ? format : FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D16_NONLINEAR_RB));
+		return (caps.m_Ext_Depth24 ? fmt : GetNearestSupportedFormat(IMAGE_FORMAT_GLES_D16_NONLINEAR_RB));
 	case IMAGE_FORMAT_GLES_D24_TEX:
 		if (!caps.m_Ext_Depth24) {
-			return FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D16_NONLINEAR_TEX);
+			return GetNearestSupportedFormat(IMAGE_FORMAT_GLES_D16_NONLINEAR_TEX);
 		}
-		return (caps.m_Ext_DepthTexture ? format : IMAGE_FORMAT_GLES_D24_RB);
+		return (caps.m_Ext_DepthTexture ? fmt : IMAGE_FORMAT_GLES_D24_RB);
 	case IMAGE_FORMAT_GLES_DST24_RB:
-		return (caps.m_Ext_PackedDepthStencil ? format : FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D24_RB));
+		return (caps.m_Ext_PackedDepthStencil ? fmt : GetNearestSupportedFormat(IMAGE_FORMAT_GLES_D24_RB));
 	case IMAGE_FORMAT_GLES_DST24_TEX:
 		if (!caps.m_Ext_PackedDepthStencil) {
-			return FindNearestSupportedImageFormat(IMAGE_FORMAT_GLES_D24_TEX);
+			return GetNearestSupportedFormat(IMAGE_FORMAT_GLES_D24_TEX);
 		}
-		return (caps.m_Ext_DepthTexture ? format : IMAGE_FORMAT_GLES_DST24_RB);
+		return (caps.m_Ext_DepthTexture ? fmt : IMAGE_FORMAT_GLES_DST24_RB);
 	}
 	return IMAGE_FORMAT_UNKNOWN;
+}
+
+ImageFormat CShaderAPIGLES2::GetNearestRenderTargetFormat(ImageFormat fmt) const {
+	return GetNearestSupportedFormat(fmt);
 }
