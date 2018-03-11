@@ -265,7 +265,7 @@ bool CHardwareConfig::PreferDynamicTextures() const {
 }
 
 bool CHardwareConfig::SupportsHDR() const {
-	AssertMsg(0, "Supports HDR is deprecated, use GetHDRType instead.");
+	AssertMsg(0, "SupportsHDR is deprecated, use GetHDRType instead.");
 	return false;
 }
 
