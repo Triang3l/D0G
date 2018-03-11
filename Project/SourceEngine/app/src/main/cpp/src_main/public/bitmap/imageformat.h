@@ -100,7 +100,7 @@ enum ImageFormat
 	IMAGE_FORMAT_LE_BGRA8888,
 #endif
 
-#if defined( SHADERAPIGLES2 )
+#if defined( SHADERAPI_GLES2 )
 	IMAGE_FORMAT_GLES_D16_RB,
 	IMAGE_FORMAT_GLES_D16_TEX, // OES_depth_texture
 	IMAGE_FORMAT_GLES_D16_NONLINEAR_RB, // NV_depth_nonlinear

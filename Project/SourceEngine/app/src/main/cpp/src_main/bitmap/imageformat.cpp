@@ -92,7 +92,7 @@ static ImageFormatInfo_t g_ImageFormatInfo[] =
 	{ "LE_BGRA8888",				4, 8, 8, 8, 8, false },			// IMAGE_FORMAT_LE_BGRA8888
 #endif
 
-#ifdef SHADERAPIGLES2
+#ifdef SHADERAPI_GLES2
 	{ "GLES_D16_RB",				2, 16, 0, 0, 0, false },		// IMAGE_FORMAT_GLES_D16_RB
 	{ "GLES_D16_TEX",				2, 16, 0, 0, 0, false },		// IMAGE_FORMAT_GLES_D16_TEX
 	{ "GLES_D16_NONLINEAR_RB",		2, 16, 0, 0, 0, false },		// IMAGE_FORMAT_GLES_D16_NONLINEAR_RB
